@@ -1,0 +1,23 @@
+{
+  "name": "授業モニター（生徒用）",
+  "short_name": "授業モニター",
+  "description": "先生と生徒をつなぐ授業支援ツール",
+  "start_url": "./student.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f0f4ff",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "https://ui-avatars.com/api/?name=授業&background=2563eb&color=fff&size=192&bold=true",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://ui-avatars.com/api/?name=授業&background=2563eb&color=fff&size=512&bold=true",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

@@ -1,0 +1,2148 @@
+<!DOCTYPE html><!-- v20260312-061524 -->
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>授業モニター｜先生用</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+  :root{--bg:#0a0e1a;--surface:#111827;--surface2:#1a2236;--border:#1e293b;--accent:#3b82f6;--accent2:#06b6d4;--green:#10b981;--red:#ef4444;--yellow:#f59e0b;--purple:#7c3aed;--text:#e2e8f0;--muted:#64748b;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(59,130,246,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+  header{position:sticky;top:0;z-index:100;background:rgba(10,14,26,0.96);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 14px;height:54px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .logo{display:flex;align-items:center;gap:7px;font-weight:700;font-size:14px;white-space:nowrap;}
+  .logo-icon{width:26px;height:26px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;}
+  .hcenter{display:flex;gap:5px;flex:1;margin:0 10px;flex-wrap:wrap;align-items:center;}
+  .hright{display:flex;align-items:center;gap:7px;}
+  .status-bar{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;white-space:nowrap;}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--muted);}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+  @keyframes awayPulse{0%,100%{opacity:1}50%{opacity:0.5}}
+  .btn{padding:5px 11px;border-radius:7px;border:none;cursor:pointer;font-family:'Noto Sans JP',sans-serif;font-size:11px;font-weight:600;transition:all 0.2s;display:inline-flex;align-items:center;gap:3px;white-space:nowrap;}
+  .btn-primary{background:var(--accent);color:white;}.btn-primary:hover{background:#2563eb;}
+  .btn-outline{background:transparent;color:var(--muted);border:1px solid var(--border);}.btn-outline:hover{border-color:var(--accent);color:var(--accent);}
+  .btn-danger{background:var(--red);color:white;}.btn-danger:hover{background:#dc2626;}
+  .btn-focus{background:linear-gradient(135deg,#7c3aed,#6d28d9);color:white;}
+  .btn-share{background:linear-gradient(135deg,#0891b2,#0e7490);color:white;}
+  .btn-survey{background:linear-gradient(135deg,#d97706,#b45309);color:white;}
+  .btn-wb{background:linear-gradient(135deg,#059669,#047857);color:white;}
+  .hdiv{width:1px;height:20px;background:var(--border);margin:0 2px;}
+  .hlabel{font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);}
+  .main{position:relative;z-index:1;padding:14px;max-width:1600px;margin:0 auto;}
+
+  /* Setup */
+  #setup-panel{max-width:520px;margin:50px auto;background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:34px;text-align:center;}
+  #setup-panel h2{font-size:22px;font-weight:700;margin-bottom:6px;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+  #setup-panel p{color:var(--muted);margin-bottom:24px;line-height:1.6;font-size:13px;}
+  .ig{margin-bottom:11px;text-align:left;}
+  .ig label{display:block;font-size:10px;color:var(--muted);margin-bottom:4px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;}
+  .ig input{width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;outline:none;transition:border-color 0.2s;}
+  .ig input:focus{border-color:var(--accent);}
+
+  /* URL box */
+  #share-box{display:none;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:11px 14px;margin-bottom:11px;}
+  .share-title{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px;}
+  .url-row{display:flex;gap:6px;align-items:center;}
+  .url-display{flex:1;padding:6px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .copy-btn{padding:6px 11px;background:var(--accent);color:white;border:none;border-radius:7px;cursor:pointer;font-size:11px;font-weight:600;white-space:nowrap;transition:all 0.2s;}
+  .copy-btn.copied{background:var(--green);}
+
+  /* Control bar */
+  #control-bar{display:none;align-items:center;justify-content:space-between;margin-bottom:11px;flex-wrap:wrap;gap:8px;}
+  .stats{display:flex;gap:14px;}
+  .stat{display:flex;flex-direction:column;gap:1px;}
+  .stat-value{font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:600;color:var(--accent);}
+  .stat-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;}
+
+  /* View tabs */
+  .view-tabs{display:flex;gap:0;margin-bottom:12px;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--surface);width:fit-content;}
+  .view-tab{padding:7px 16px;background:transparent;border:none;color:var(--muted);font-family:'Noto Sans JP',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;}
+  .view-tab.active{background:var(--accent);color:white;}
+
+  /* Student grid */
+  #grid{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;}
+  #grid.view-wb{grid-template-columns:repeat(4,1fr);}
+  .student-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:transform 0.2s,box-shadow 0.2s,border-color 0.2s;}
+  .student-card:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(0,0,0,0.4);}
+  .student-card.focused{border-color:var(--purple);}
+  .card-header{padding:8px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
+  .student-info{display:flex;align-items:center;gap:7px;min-width:0;flex:1;}
+  .avatar{width:24px;height:24px;border-radius:50%;object-fit:cover;flex-shrink:0;}
+  .avatar-ph{width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;}
+  .sname{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:3px;}
+  .semail{font-size:9px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .share-type{font-size:9px;font-weight:600;padding:1px 5px;border-radius:8px;flex-shrink:0;}
+  .st-ok{background:rgba(16,185,129,0.15);color:var(--green);border:1px solid rgba(16,185,129,0.3);}
+  .st-warn{background:rgba(239,68,68,0.15);color:var(--red);border:1px solid rgba(239,68,68,0.3);}
+  .badge{padding:2px 6px;border-radius:20px;font-size:9px;font-weight:600;flex-shrink:0;}
+  .badge-live{background:rgba(16,185,129,0.15);color:var(--green);border:1px solid rgba(16,185,129,0.3);}
+  .badge-waiting{background:rgba(245,158,11,0.15);color:var(--yellow);border:1px solid rgba(245,158,11,0.3);}
+  .badge-focused{background:rgba(124,58,237,0.2);color:#a78bfa;border:1px solid rgba(124,58,237,0.4);}
+
+  /* Screen area */
+  .screen-area{position:relative;background:#000;aspect-ratio:16/9;overflow:hidden;cursor:pointer;}
+  .screen-area video{width:100%;height:100%;object-fit:contain;display:none;}
+  .screen-ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:var(--surface2);}
+  .screen-ph-icon{font-size:20px;opacity:0.3;}
+  .screen-ph-text{font-size:10px;color:var(--muted);}
+
+  /* Whiteboard area (replaces screen-area in wb view) */
+  .wb-area{position:relative;background:white;aspect-ratio:4/3;overflow:hidden;cursor:pointer;}
+  .wb-canvas-preview{width:100%;height:100%;object-fit:contain;display:block;}
+  .wb-ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:#f8f9fa;}
+  .wb-ph-icon{font-size:20px;opacity:0.3;}
+  .wb-ph-text{font-size:10px;color:var(--muted);}
+  /* Submitted badge on wb */
+  .wb-submitted-badge{position:absolute;top:6px;right:6px;background:var(--green);color:white;font-size:9px;font-weight:700;padding:2px 6px;border-radius:6px;}
+  /* Drawing indicator */
+  .wb-drawing-dot{position:absolute;top:6px;left:6px;width:7px;height:7px;border-radius:50%;background:var(--accent);animation:pulse 1s infinite;}
+
+  .card-footer{padding:6px 10px;display:flex;align-items:center;justify-content:space-between;gap:4px;}
+  .jtime{font-size:9px;color:var(--muted);font-family:'JetBrains Mono',monospace;white-space:nowrap;}
+  .card-actions{display:flex;gap:3px;}
+  .icon-btn{height:21px;padding:0 6px;border-radius:5px;background:var(--surface2);border:1px solid var(--border);color:var(--muted);cursor:pointer;display:flex;align-items:center;gap:2px;font-size:10px;font-family:'Noto Sans JP',sans-serif;font-weight:600;transition:all 0.2s;white-space:nowrap;}
+  .icon-btn:hover{border-color:var(--accent);color:var(--accent);}
+  .icon-btn.af{border-color:var(--purple);color:#a78bfa;background:rgba(124,58,237,0.1);}
+  #empty-state{grid-column:1/-1;text-align:center;padding:50px 20px;color:var(--muted);}
+  #empty-state .ei{font-size:34px;margin-bottom:10px;opacity:0.3;}
+
+  /* Whiteboard control bar */
+  #wb-controls{display:none;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:12px;}
+  .btn-img-upload{padding:5px 10px;font-size:11px;background:var(--surface);border:1px solid var(--border);border-radius:6px;cursor:pointer;color:var(--text);transition:all 0.2s;}
+  .btn-img-upload:hover{background:var(--border);}
+  #img-controls{display:none;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:12px;}
+  .dist-img-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;}
+  .dist-img-card-header{padding:8px 12px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border);background:var(--surface2);}
+  .dist-img-card-body{padding:10px;display:flex;justify-content:center;align-items:center;min-height:80px;background:#f8fafc;}
+  .dist-img-card-body img{max-width:100%;max-height:120px;object-fit:contain;border-radius:4px;}
+  .dist-img-card-ph{text-align:center;color:var(--muted);font-size:11px;}
+  .dist-card-opened{font-size:10px;color:var(--green);font-weight:600;}
+  .dist-card-closed{font-size:10px;color:var(--muted);}
+  #dist-img-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
+  .dist-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+  .dist-card-header{padding:6px 10px;display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border-bottom:1px solid var(--border);}
+  .dist-card-name{font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100px;}
+  .dist-card-body{position:relative;background:#f0f0f0;cursor:pointer;}
+  .dist-card-body img{width:100%;aspect-ratio:16/9;object-fit:contain;display:block;}
+  .dist-card-ph{width:100%;aspect-ratio:16/9;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#94a3b8;font-size:11px;gap:4px;}
+  .dist-sub-badge{position:absolute;bottom:4px;right:4px;background:var(--green);color:white;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;}
+  .dist-draw-dot{position:absolute;top:4px;right:4px;width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse 1s infinite;}
+  .wb-ctrl-row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;}
+  .wb-input{padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Noto Sans JP',sans-serif;font-size:13px;outline:none;flex:1;min-width:200px;}
+  .wb-input:focus{border-color:var(--accent);}
+  .wb-stats{display:flex;gap:16px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
+  .wb-stat{font-size:11px;color:var(--muted);}
+  .wb-stat span{color:var(--accent);font-weight:700;font-family:'JetBrains Mono',monospace;}
+
+  /* Fullscreen */
+  #fs-overlay{display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.97);flex-direction:column;}
+  #fs-overlay.show{display:flex;}
+  .fs-header{padding:9px 14px;display:flex;align-items:center;justify-content:space-between;background:rgba(17,24,39,0.9);gap:8px;flex-wrap:wrap;}
+  .fs-sname{font-size:14px;font-weight:700;}
+  .fs-actions{display:flex;gap:5px;flex-wrap:wrap;}
+  #fs-video{flex:1;width:100%;object-fit:contain;background:#000;}
+  /* WB fullscreen */
+  #fs-wb-overlay{display:none;position:fixed;inset:0;z-index:1000;background:white;flex-direction:column;}
+  #fs-wb-overlay.show{display:flex;}
+  .fs-wb-header{padding:9px 14px;display:flex;align-items:center;justify-content:space-between;background:#f8f9fa;border-bottom:1px solid #dee2e6;gap:8px;}
+  .fs-wb-name{font-size:14px;font-weight:700;color:#1e293b;}
+  #fs-wb-img{flex:1;width:100%;object-fit:contain;background:white;}
+
+  /* Survey */
+  #survey-panel{display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.65);align-items:center;justify-content:center;padding:20px;}
+  #survey-panel.show{display:flex;}
+  .survey-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:26px;width:100%;max-width:520px;max-height:88vh;overflow-y:auto;}
+  .survey-box h3{font-size:17px;font-weight:700;margin-bottom:14px;}
+  .survey-tabs{display:flex;margin-bottom:18px;border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+  .survey-tab{flex:1;padding:8px;background:transparent;border:none;color:var(--muted);font-family:'Noto Sans JP',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;}
+  .survey-tab.active{background:var(--accent);color:white;}
+  .si{width:100%;padding:9px 11px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Noto Sans JP',sans-serif;font-size:13px;outline:none;transition:border-color 0.2s;}
+  .si:focus{border-color:var(--accent);}
+  .flabel{font-size:10px;color:var(--muted);font-weight:600;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:5px;display:block;}
+  .choice-row{display:flex;gap:7px;align-items:center;margin-bottom:7px;}
+  .choice-row input{flex:1;}
+  .clabel{font-size:12px;color:var(--muted);width:18px;font-weight:600;}
+  .add-ch{background:transparent;border:1px dashed var(--border);border-radius:7px;color:var(--muted);padding:6px 11px;cursor:pointer;font-size:12px;font-family:'Noto Sans JP',sans-serif;width:100%;transition:all 0.2s;margin-top:4px;}
+  .add-ch:hover{border-color:var(--accent);color:var(--accent);}
+  .rm-ch{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:4px;}
+  .sactions{display:flex;gap:7px;margin-top:14px;justify-content:flex-end;}
+
+  /* Results */
+  #results-panel{display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.65);align-items:center;justify-content:center;padding:20px;}
+  #results-panel.show{display:flex;}
+  .results-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:26px;width:100%;max-width:620px;max-height:88vh;overflow-y:auto;}
+  .results-box h3{font-size:16px;font-weight:700;margin-bottom:5px;}
+  .results-q{font-size:13px;color:var(--muted);margin-bottom:18px;line-height:1.5;padding:10px 12px;background:var(--surface2);border-radius:8px;}
+  .bar-row{margin-bottom:13px;}
+  .bar-label{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;font-size:12px;font-weight:600;}
+  .bar-count{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+  .bar-track{height:32px;background:var(--surface2);border-radius:7px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:7px;transition:width 0.7s cubic-bezier(0.34,1.56,0.64,1);display:flex;align-items:center;padding-left:10px;font-size:11px;font-weight:700;color:white;}
+  .bar-voters{font-size:10px;color:var(--muted);margin-top:2px;}
+  .bar-voters.hidden{display:none;}
+  .free-item{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px 13px;margin-bottom:7px;}
+  .free-text{font-size:14px;line-height:1.5;margin-bottom:3px;}
+  .free-name{font-size:11px;color:var(--muted);}
+  .free-name.hidden{display:none;}
+  .ractions{display:flex;gap:7px;margin-top:14px;justify-content:space-between;align-items:center;flex-wrap:wrap;}
+  .bc0{background:linear-gradient(90deg,#3b82f6,#2563eb);}
+  .bc1{background:linear-gradient(90deg,#10b981,#059669);}
+  .bc2{background:linear-gradient(90deg,#f59e0b,#d97706);}
+  .bc3{background:linear-gradient(90deg,#8b5cf6,#7c3aed);}
+  .bc4{background:linear-gradient(90deg,#ef4444,#dc2626);}
+  .bc5{background:linear-gradient(90deg,#ec4899,#db2777);}
+  .bc6{background:linear-gradient(90deg,#14b8a6,#0d9488);}
+  .bc7{background:linear-gradient(90deg,#f97316,#ea580c);}
+
+  /* Msg modal */
+  #msg-modal{display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;}
+  #msg-modal.show{display:flex;}
+  .modal-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px;width:100%;max-width:400px;margin:20px;}
+  .modal-title{font-size:15px;font-weight:700;margin-bottom:4px;}
+  .modal-sub{font-size:12px;color:var(--muted);margin-bottom:12px;}
+  .modal-ta{width:100%;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:9px;color:var(--text);font-family:'Noto Sans JP',sans-serif;font-size:13px;outline:none;resize:vertical;min-height:75px;}
+  .modal-ta:focus{border-color:var(--accent);}
+  .mactions{display:flex;gap:7px;margin-top:11px;justify-content:flex-end;}
+  .qmsgs{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:7px;}
+  .qmb{padding:3px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;color:var(--muted);font-size:10px;cursor:pointer;transition:all 0.2s;font-family:'Noto Sans JP',sans-serif;}
+  .qmb:hover{border-color:var(--accent);color:var(--accent);}
+  .toast{position:fixed;bottom:16px;right:16px;z-index:3000;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:9px;font-size:12px;box-shadow:0 8px 24px rgba(0,0,0,0.4);transform:translateY(80px);opacity:0;transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);}
+  .toast.show{transform:translateY(0);opacity:1;}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"><div class="logo-icon">👁</div><span>ClassMonitor</span></div>
+
+  <div class="hcenter" id="hactions" style="display:none;">
+    <span class="hlabel">全体:</span>
+    <button class="btn btn-focus" onclick="broadcastFocus()">🎯 全員集中</button>
+    <button class="btn btn-outline" onclick="broadcastUnfocus()">✅ 解除</button>
+    <div class="hdiv"></div>
+    <span class="hlabel">先生画面:</span>
+    <button class="btn btn-share" id="tshare-btn" onclick="toggleTeacherShare()">📺 画面を共有</button>
+    <div class="hdiv"></div>
+    <span class="hlabel">アンケート:</span>
+    <button class="btn btn-survey" onclick="openSurvey('choice')">📊 選択式</button>
+    <button class="btn btn-survey" onclick="openSurvey('free')">✏️ 自由記述</button>
+    <div class="hdiv"></div>
+    <button class="btn btn-outline" onclick="openMsgModal(null)">💬 全員へ</button>
+  </div>
+  <div class="hright">
+    <div class="status-bar"><div class="dot" id="cdot"></div><span id="cstatus">未接続</span></div>
+    <button class="btn btn-danger" id="end-btn" style="display:none;" onclick="endSession()">終了</button>
+  </div>
+</header>
+
+<div class="main">
+  <!-- Setup -->
+  <div id="setup-panel">
+    <h2>授業モニタリング</h2>
+    <p>Firebase設定を入力してセッションを開始してください。</p>
+    <div class="ig"><label>クラス名（任意）</label><input type="text" id="class-name" placeholder="例：3年1組 数学"/></div>
+    <div class="ig"><label>Firebase API Key</label><input type="text" id="fb-apikey" placeholder="AIzaSy..."/></div>
+    <div class="ig"><label>Firebase Database URL</label><input type="text" id="fb-dburl" placeholder="https://your-project-default-rtdb.firebaseio.com"/></div>
+    <div class="ig"><label>Firebase Project ID</label><input type="text" id="fb-projectid" placeholder="your-project-id"/></div>
+    <button id="login-btn" class="btn btn-primary" style="width:100%;padding:11px;font-size:13px;margin-top:5px;justify-content:center;" onclick="teacherLogin()">🔐 Googleログインしてセッション開始</button>
+    <p id="login-status" style="text-align:center;font-size:12px;color:#94a3b8;margin-top:6px;display:none;"></p>
+  </div>
+
+  <!-- Control bar -->
+  <div id="control-bar">
+    <div class="stats">
+      <div class="stat"><div class="stat-value" id="stat-c">0</div><div class="stat-label">接続中</div></div>
+      <div class="stat"><div class="stat-value" id="stat-s">0</div><div class="stat-label">共有中</div></div>
+      <div class="stat"><div class="stat-value" id="stat-f">0</div><div class="stat-label">集中中</div></div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <!-- View tabs -->
+      <div class="view-tabs">
+        <button class="view-tab active" id="tab-monitor" onclick="switchView('monitor')">🖥 モニタリング</button>
+        <button class="view-tab" id="tab-wb" onclick="switchView('wb')">📋 ホワイトボード</button>
+        <button class="view-tab" id="tab-img" onclick="switchView('img')">🖼 画像</button>
+        <button class="view-tab" id="tab-group" onclick="switchView('group')">👥 班別学習</button>
+      </div>
+      <select id="grid-size" onchange="updateGridSize()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:5px 9px;border-radius:7px;font-family:inherit;font-size:11px;outline:none;">
+        <option value="2">2列</option><option value="3">3列</option><option value="4" selected>4列</option><option value="5">5列</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Share URL -->
+  <div id="share-box">
+    <div class="share-title">📎 生徒用URL</div>
+    <div class="url-row"><div class="url-display" id="share-url"></div><button class="copy-btn" id="copy-btn" onclick="copyUrl()">コピー</button></div>
+  </div>
+
+  <!-- Whiteboard controls (shown in wb view) -->
+  <div id="wb-controls">
+    <div class="wb-ctrl-row">
+      <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
+        <span style="font-size:10px;color:var(--muted);font-weight:600;letter-spacing:0.05em;text-transform:uppercase;">生徒への指示（ホワイトボード上部に表示）</span>
+        <input type="text" class="wb-input" id="wb-instruction" placeholder="例：今日学んだことを図にしてみましょう"/>
+      </div>
+      <button class="btn btn-wb" onclick="sendWbInstruction()">📤 指示を送る</button>
+      <button class="btn btn-outline" onclick="sendWbCommand('open')">📋 配布</button>
+      <button class="btn btn-outline" onclick="sendWbCommand('collect')">📥 回収</button>
+      <button class="btn btn-danger" onclick="sendWbCommand('clear')">🗑️ 全消去</button>
+    </div>
+
+    <div class="wb-stats">
+      <div class="wb-stat">配布中: <span id="wb-stat-open">0</span>人</div>
+      <div class="wb-stat">提出済: <span id="wb-stat-sub">0</span>人</div>
+      <div class="wb-stat">描画中: <span id="wb-stat-drawing">0</span>人</div>
+    </div>
+  </div>
+
+  <!-- Image view controls -->
+  <div id="img-controls">
+    <div class="wb-ctrl-row" style="flex-wrap:wrap;gap:10px;">
+      <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:200px;">
+        <span style="font-size:10px;color:var(--muted);font-weight:600;letter-spacing:0.05em;text-transform:uppercase;">配布する画像</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input type="file" id="dist-img-input" accept="image/*" onchange="distImgSelected(this)" style="display:none;"/>
+          <button class="btn-img-upload" onclick="document.getElementById('dist-img-input').click()">🖼️ 画像を選択</button>
+          <img id="dist-img-preview" style="width:64px;height:42px;object-fit:contain;border:1px solid var(--border);border-radius:4px;background:#f8fafc;display:none;"/>
+          <span id="dist-img-name" style="font-size:11px;color:var(--muted);display:none;"></span>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
+        <button class="btn btn-wb" id="dist-img-send-btn" onclick="distImgSend()" disabled style="opacity:0.4;">📤 全員に配布</button>
+        <button class="btn btn-outline" id="dist-img-collect-btn" onclick="distImgCollect()">📥 回収</button>
+        <button class="btn btn-danger" id="dist-img-clear-btn" onclick="distImgClearAll()">🗑️ 削除</button>
+      </div>
+    </div>
+    <div class="wb-stats" id="dist-img-stats" style="margin-top:8px;">
+      <div class="wb-stat">配布中: <span id="dist-stat-active">−</span>人</div>
+      <div class="wb-stat">提出済: <span id="dist-stat-sub">0</span>人</div>
+      <div class="wb-stat">描画中: <span id="dist-stat-drawing">0</span>人</div>
+      <div class="wb-stat" style="color:var(--muted);font-size:10px;" id="dist-img-status">画像未選択</div>
+    </div>
+  </div>
+
+  <!-- img view grid（配布中のみ表示） -->
+  <div id="dist-img-grid" style="display:none;"></div>
+
+  <!-- Grid -->
+  <div id="grid">
+    <div id="empty-state"><div class="ei">📱</div><p style="font-size:12px;">セッションを開始すると生徒用URLが表示されます。</p></div>
+  </div>
+</div>
+
+<!-- Screen fullscreen -->
+<div id="fs-overlay">
+  <div class="fs-header">
+    <div><div class="fs-sname" id="fs-name">-</div><div style="font-size:10px;color:var(--muted);" id="fs-id">-</div></div>
+    <div class="fs-actions">
+      <button class="btn btn-focus" onclick="focusStudent(currentFsId)">🎯 集中</button>
+      <button class="btn btn-outline" onclick="unfocusStudent(currentFsId)">✅ 解除</button>
+      <button class="btn btn-share" onclick="broadcastStudentScreen(currentFsId)">📡 全員に共有</button>
+      <button class="btn btn-outline" onclick="stopBroadcastScreen()">⏹ 停止</button>
+      <button class="btn btn-outline" onclick="openMsgModal(currentFsId)">💬</button>
+      <button class="btn btn-danger" onclick="closeFullscreen()">✕</button>
+    </div>
+  </div>
+  <video id="fs-video" autoplay playsinline></video>
+</div>
+
+<!-- WB fullscreen -->
+<div id="fs-wb-overlay">
+  <div class="fs-wb-header">
+    <div class="fs-wb-name" id="fs-wb-name">-</div>
+    <div style="display:flex;gap:6px;">
+      <button class="btn btn-outline" style="color:#1e293b;border-color:#dee2e6;" onclick="wbLbNav(-1)">← 前</button>
+      <span id="fs-wb-nav" style="font-size:12px;color:#64748b;align-self:center;"></span>
+      <button class="btn btn-outline" style="color:#1e293b;border-color:#dee2e6;" onclick="wbLbNav(1)">次 →</button>
+      <button class="btn btn-danger" onclick="closeWbFullscreen()">✕ 閉じる</button>
+    </div>
+  </div>
+  <img id="fs-wb-img" src="" alt="" style="flex:1;width:100%;object-fit:contain;background:white;"/>
+</div>
+
+<!-- 班別学習パネル -->
+<div id="group-panel" style="display:none;padding:16px;">
+  <div style="background:var(--surface2);border-radius:12px;padding:16px;margin-bottom:16px;">
+    <h3 style="margin:0 0 12px;font-size:15px;">👥 班の設定</h3>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
+      <label style="font-size:13px;">班の数：</label>
+      <input type="text" id="group-count" inputmode="numeric" pattern="[0-9]*" maxlength="2" placeholder="例: 4"
+        oninput="this.value=this.value.replace(/[^0-9]/g,'')"
+        style="width:60px;padding:6px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:14px;text-align:center;">
+      <button class="btn btn-primary" style="padding:6px 14px;font-size:13px;" onclick="initGroups()">班を作成</button>
+      <button class="btn btn-outline" style="padding:6px 14px;font-size:13px;" onclick="autoAssignGroups()">🔀 自動振り分け</button>
+      <button class="btn" style="padding:6px 14px;font-size:13px;background:#ef4444;color:#fff;" onclick="clearGroups()">班を解散</button>
+    </div>
+    <div id="group-assign-area" style="display:none;">
+      <div id="group-columns" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
+      <div style="margin-top:12px;">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">未割り当て</div>
+        <div id="unassigned-list" style="display:flex;gap:6px;flex-wrap:wrap;min-height:36px;background:var(--surface);border-radius:8px;padding:8px;border:1px dashed var(--border);"></div>
+      </div>
+      <button class="btn btn-primary" style="margin-top:12px;padding:8px 20px;" onclick="saveGroups()">✅ 班を確定して保存</button>
+    </div>
+  </div>
+  <div id="group-content-area" style="display:none;">
+    <!-- ツールバー：列数 + 一括操作 -->
+    <div id="group-bulk-panel" style="display:none;background:var(--surface2);border-radius:12px;padding:12px 14px;margin-bottom:14px;border:1px solid var(--border);">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:6px;margin-right:6px;">
+          <span style="font-size:12px;color:var(--muted);">列数</span>
+          <div style="display:flex;gap:3px;" id="col-switcher">
+            <button onclick="setGroupCols(2)" id="gcol-2" class="gcol-btn" style="width:28px;height:28px;border-radius:6px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-size:12px;cursor:pointer;">2</button>
+            <button onclick="setGroupCols(3)" id="gcol-3" class="gcol-btn" style="width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-size:12px;cursor:pointer;">3</button>
+            <button onclick="setGroupCols(4)" id="gcol-4" class="gcol-btn" style="width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-size:12px;cursor:pointer;">4</button>
+          </div>
+        </div>
+        <div style="width:1px;height:24px;background:var(--border);margin:0 2px;"></div>
+        <button class="btn btn-primary" style="padding:5px 10px;font-size:12px;" onclick="openAllGroupWb()">📋 全班WB配布</button>
+        <button class="btn" style="padding:5px 10px;font-size:12px;background:#ef4444;color:#fff;border-color:#ef4444;" onclick="closeAllGroupWb()">📋 全班WB回収</button>
+        <button class="btn btn-primary" style="padding:5px 10px;font-size:12px;" onclick="sendAllGroupImg()">🖼 全班画像配布</button>
+        <button class="btn" style="padding:5px 10px;font-size:12px;background:#ef4444;color:#fff;border-color:#ef4444;" onclick="collectAllGroupImg()">🖼 全班画像回収</button>
+      </div>
+    </div>
+    <!-- 班カードグリッド -->
+    <div id="group-monitor-grid" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;"></div>
+  </div>
+</div>
+
+<!-- Survey -->
+<div id="survey-panel">
+  <div class="survey-box">
+    <h3>📋 アンケート作成</h3>
+    <div class="survey-tabs">
+      <button class="survey-tab active" id="tab-choice" onclick="switchTab('choice')">📊 選択式</button>
+      <button class="survey-tab" id="tab-free" onclick="switchTab('free')">✏️ 自由記述</button>
+    </div>
+    <label class="flabel">質問文</label>
+    <input type="text" class="si" id="sq" placeholder="質問を入力してください..." style="margin-bottom:14px;"/>
+    <div id="choice-sec">
+      <label class="flabel">選択肢（2〜4つ）</label>
+      <div id="choices">
+        <div class="choice-row"><span class="clabel">A</span><input type="text" class="si ci" placeholder="選択肢A"/><button class="rm-ch" onclick="removeChoice(this)" style="display:none;">✕</button></div>
+        <div class="choice-row"><span class="clabel">B</span><input type="text" class="si ci" placeholder="選択肢B"/><button class="rm-ch" onclick="removeChoice(this)" style="display:none;">✕</button></div>
+      </div>
+      <button class="add-ch" id="add-ch-btn" onclick="addChoice()">＋ 選択肢を追加（最大8つ）</button>
+    </div>
+    <div id="free-sec" style="display:none;"><div style="padding:11px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;font-size:12px;color:var(--muted);">生徒が自由にテキストを入力して回答します。</div></div>
+    <div class="sactions"><button class="btn btn-outline" onclick="closeSurvey()">キャンセル</button><button class="btn btn-primary" onclick="startSurvey()">📤 送信</button></div>
+  </div>
+</div>
+
+<!-- Results -->
+<div id="results-panel">
+  <div class="results-box">
+    <h3 id="rtitle">📊 集計結果</h3>
+    <div class="results-q" id="rq"></div>
+    <div id="rcontent"></div>
+    <div class="ractions">
+      <div id="name-toggle-area" style="display:none;"><button class="btn btn-outline" id="ntbtn" onclick="toggleNames()">👤 名前を表示</button></div>
+      <div style="display:flex;gap:6px;"><button class="btn btn-outline" onclick="closeResults()">閉じる</button><button class="btn btn-danger" onclick="endSurvey()">🛑 終了</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- Msg modal -->
+<div id="msg-modal">
+  <div class="modal-box">
+    <div class="modal-title">💬 メッセージを送る</div>
+    <div class="modal-sub" id="mtarget">-</div>
+    <div class="qmsgs">
+      <button class="qmb" onclick="setQM('よくできました！')">👍 よくできました！</button>
+      <button class="qmb" onclick="setQM('集中しましょう')">👀 集中</button>
+      <button class="qmb" onclick="setQM('正解です！')">⭐ 正解！</button>
+      <button class="qmb" onclick="setQM('質問は手を挙げてください')">✋ 手を挙げて</button>
+    </div>
+    <textarea class="modal-ta" id="minput" placeholder="メッセージを入力..."></textarea>
+    <div class="mactions"><button class="btn btn-outline" onclick="closeMsgModal()">キャンセル</button><button class="btn btn-primary" onclick="sendMessage()">📨 送信</button></div>
+  </div>
+</div>
+<!-- 班別メッセージモーダル -->
+<div id="group-msg-modal" style="display:none;position:fixed;inset:0;z-index:6000;background:rgba(15,23,42,.6);align-items:center;justify-content:center;padding:16px;">
+  <div class="modal-box">
+    <div class="modal-title" id="gm-modal-title">💬 メッセージを送る</div>
+    <div class="modal-sub" id="gmtarget">送信先: 班の全員</div>
+    <div class="qmsgs" id="gm-quick-btns">
+      <button class="qmb" onclick="setGQM('よくできました！')">👍 よくできました！</button>
+      <button class="qmb" onclick="setGQM('集中しましょう')">👀 集中</button>
+      <button class="qmb" onclick="setGQM('正解です！')">⭐ 正解！</button>
+      <button class="qmb" onclick="setGQM('質問は手を挙げてください')">✋ 手を挙げて</button>
+    </div>
+    <textarea class="modal-ta" id="gminput" placeholder="メッセージを入力..."></textarea>
+    <div id="gm-optional-note" style="display:none;font-size:11px;color:var(--muted);margin-top:-6px;margin-bottom:6px;">※ コメントは任意です。空欄のまま送信できます。</div>
+    <div class="mactions">
+      <button class="btn btn-outline" onclick="closeGroupMsgModal()">キャンセル</button>
+      <button class="btn btn-primary" id="gm-send-btn" onclick="sendGroupMessage()">📨 送信</button>
+    </div>
+  </div>
+</div>
+
+<!-- 班モニタリング拡大モーダル -->
+<div id="group-zoom-modal" style="display:none;position:fixed;inset:0;z-index:5500;background:rgba(0,0,0,.8);align-items:flex-start;justify-content:center;padding:20px;box-sizing:border-box;overflow-y:auto;" onclick="closeGroupZoom()">
+  <div style="background:var(--surface);border-radius:16px;width:100%;max-width:860px;margin:auto;" onclick="event.stopPropagation()">
+    <!-- モーダルヘッダー -->
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border);">
+      <span id="group-zoom-title" style="font-weight:700;font-size:16px;color:var(--text);"></span>
+      <button onclick="closeGroupZoom()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--muted);line-height:1;">✕</button>
+    </div>
+    <!-- WB/画像プレビュー（大） -->
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border);">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">ホワイトボード / 配布画像</div>
+      <div id="group-zoom-preview" style="background:#fff;border-radius:10px;border:1px solid var(--border);width:100%;aspect-ratio:16/9;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;">
+        <canvas id="group-zoom-canvas" style="width:100%;height:100%;display:none;"></canvas>
+        <img id="group-zoom-img" style="width:100%;height:100%;object-fit:contain;display:none;" />
+        <div id="group-zoom-nopreview" style="color:var(--muted);font-size:13px;opacity:0.5;">未配布</div>
+      </div>
+    </div>
+    <!-- メンバー一覧 -->
+    <div style="padding:14px 20px;border-bottom:1px solid var(--border);">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">メンバー</div>
+      <div id="group-zoom-members" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+    </div>
+    <!-- 操作ボタン -->
+    <div style="padding:14px 20px;display:flex;gap:8px;flex-wrap:wrap;">
+      <div id="group-zoom-gid" style="display:none;"></div>
+      <button class="btn btn-primary" style="padding:6px 14px;font-size:13px;" onclick="openGroupWb(document.getElementById('group-zoom-gid').dataset.gid)">📋 WB配布</button>
+      <button class="btn" style="padding:6px 14px;font-size:13px;background:#ef4444;color:#fff;border-color:#ef4444;" onclick="closeGroupWb(document.getElementById('group-zoom-gid').dataset.gid)">📋 WB回収</button>
+      <button class="btn btn-primary" style="padding:6px 14px;font-size:13px;" onclick="sendGroupImg(document.getElementById('group-zoom-gid').dataset.gid)">🖼 画像配布</button>
+      <button class="btn" style="padding:6px 14px;font-size:13px;background:#ef4444;color:#fff;border-color:#ef4444;" onclick="collectGroupImg(document.getElementById('group-zoom-gid').dataset.gid)">🖼 画像回収</button>
+      <button class="btn btn-outline" style="padding:6px 14px;font-size:13px;background:#7c3aed;color:#fff;" onclick="sendGroupMsg(document.getElementById('group-zoom-gid').dataset.gid)">💬 メッセージ</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+  import{initializeApp}from'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+  import{getDatabase,ref,set,get,onValue,remove,onChildAdded,onChildChanged,onChildRemoved}from'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+  import{getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged,signOut}from'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+  window.FB={initializeApp,getDatabase,ref,set,get,onValue,remove,onChildAdded,onChildChanged,onChildRemoved,getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged,signOut};
+
+  // Firebase読み込み完了を通知
+  window.dispatchEvent(new Event('fb-ready'));
+</script>
+<script type="module">
+// Firebase が読み込まれるまでセッション開始ボタンを無効化
+(function(){
+  const btn = document.querySelector('button[onclick="startSession()"]');
+  if(btn){ btn.disabled = true; btn.textContent = '⏳ 読み込み中...'; }
+  window.addEventListener('fb-ready', function(){
+    if(btn){ btn.disabled = false; btn.textContent = '🚀 セッション開始'; }
+  }, {once: true});
+})();
+let db=null,sessionId=null,peerConnections={},students={},msgTargetId=null;
+window.currentFsId=null;
+let currentBroadcastId=null,teacherStream=null,teacherSharing=false;
+let surveyType='choice',surveyActive=false,namesVisible=false;
+let currentView='monitor';
+let wbActive=false;
+let wbSubmissions={}, wbLbKeys=[], wbLbIdx=0;
+const LABELS=['A','B','C','D','E','F','G','H'];
+const ICE={iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'},{urls:'stun:stun2.l.google.com:19302'},{urls:'stun:stun3.l.google.com:19302'}],iceCandidatePoolSize:20,bundlePolicy:'max-bundle',rtcpMuxPolicy:'require'};
+
+function gid(){
+  // crypto.getRandomValues で安全なランダムID（16文字）
+  const arr = new Uint8Array(12);
+  crypto.getRandomValues(arr);
+  return Array.from(arr).map(b=>b.toString(36).padStart(2,'0')).join('').substr(0,16).toUpperCase();
+}
+function toast(msg,d=3000){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),d);}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// ===== SESSION =====
+// 教員Googleログイン → 完了後にstartSession呼び出し
+let _teacherAuth = null;
+window.teacherLogin = async function(){
+  const ak=document.getElementById('fb-apikey').value.trim();
+  const du=document.getElementById('fb-dburl').value.trim();
+  const pi=document.getElementById('fb-projectid').value.trim();
+  if(!ak||!du||!pi){toast('⚠️ Firebase設定を先に入力してください');return;}
+  if(!window.FB){toast('⚠️ Firebase SDKの読み込み中です');return;}
+
+  const btn=document.getElementById('login-btn');
+  btn.disabled=true; btn.textContent='ログイン中...';
+
+  try{
+    // Firebase初期化（authDomain必須）
+    const app=window.FB.initializeApp(
+      {apiKey:ak,databaseURL:du,projectId:pi,authDomain:`${pi}.firebaseapp.com`},
+      'teacher-auth-'+Date.now()
+    );
+    db=window.FB.getDatabase(app);
+    _teacherAuth=window.FB.getAuth(app);
+
+    // ログイン済みか確認
+    let user = await new Promise(resolve=>{
+      const unsub=window.FB.onAuthStateChanged(_teacherAuth,u=>{unsub();resolve(u);});
+    });
+
+    if(!user){
+      const result=await window.FB.signInWithPopup(_teacherAuth,new window.FB.GoogleAuthProvider());
+      user=result.user;
+    }
+
+    // ログイン成功 → そのままセッション開始
+    const status=document.getElementById('login-status');
+    if(status){status.style.display='block';status.textContent=`✅ ${user.displayName||user.email}`;}
+    btn.textContent='✅ ログイン済み　セッション開始中...';
+    await window.startSession();
+
+  }catch(e){
+    btn.disabled=false;
+    btn.textContent='🔐 Googleログインしてセッション開始';
+    if(e.code==='auth/popup-closed-by-user'){toast('⚠️ ログインをキャンセルしました');return;}
+    toast('❌ エラー: '+e.message);
+  }
+};
+
+window.startSession=async function(){
+  const ak=document.getElementById('fb-apikey').value.trim();
+  const du=document.getElementById('fb-dburl').value.trim();
+  const pi=document.getElementById('fb-projectid').value.trim();
+  if(!ak||!du||!pi){toast('⚠️ Firebase設定を入力してください');return;}
+  if(!window.FB){toast('⚠️ Firebase SDKの読み込み中です。しばらく待ってから再度お試しください');return;}
+
+  // teacherLogin()経由の場合はdb初期化済み、直接呼び出し時のフォールバック
+  if(!db){
+    try{
+      const app=window.FB.initializeApp({apiKey:ak,databaseURL:du,projectId:pi},'t-'+Date.now());
+      db=window.FB.getDatabase(app);
+    }catch(e){toast('❌ '+e.message);return;}
+  }
+
+  sessionId=gid();
+  const{ref,set}=window.FB;
+  await set(ref(db,`sessions/${sessionId}`),{className:document.getElementById('class-name').value||'クラス',createdAt:Date.now(),active:true});
+  const base=location.href.replace('teacher.html','student.html');
+  const url=`${base}?session=${sessionId}&db=${encodeURIComponent(du)}&apiKey=${encodeURIComponent(ak)}&projectId=${encodeURIComponent(pi)}`;
+  document.getElementById('setup-panel').style.display='none';
+  document.getElementById('control-bar').style.display='flex';
+  document.getElementById('share-box').style.display='block';
+  document.getElementById('end-btn').style.display='';
+  document.getElementById('hactions').style.display='flex';
+  document.getElementById('share-url').textContent=url;
+  const dot=document.getElementById('cdot');dot.style.background='var(--green)';dot.style.animation='pulse 2s infinite';
+  document.getElementById('cstatus').textContent=sessionId;
+  listenStudents();
+  listenGroups();
+  toast('✅ セッション開始！URLを生徒に送ってください');
+};
+
+window.endSession=async function(){
+  if(!confirm('セッションを終了しますか？'))return;
+  if(teacherStream)teacherStream.getTracks().forEach(t=>t.stop());
+  await window.FB.remove(window.FB.ref(db,`sessions/${sessionId}`));
+  location.reload();
+};
+
+// ===== VIEW SWITCH =====
+window.switchView=function(v){
+  currentView=v;
+  document.getElementById('tab-monitor').classList.toggle('active',v==='monitor');
+  document.getElementById('tab-wb').classList.toggle('active',v==='wb');
+  document.getElementById('tab-img').classList.toggle('active',v==='img');
+  document.getElementById('tab-group').classList.toggle('active',v==='group');
+  document.getElementById('wb-controls').style.display=v==='wb'?'block':'none';
+  document.getElementById('img-controls').style.display=v==='img'?'block':'none';
+  document.getElementById('group-panel').style.display=v==='group'?'block':'none';
+  document.getElementById('grid').style.display=(v==='img'||v==='group')?'none':'';
+  if(v!=='group') Object.keys(students).forEach(sid=>updateCardContent(sid));
+  if(v==='wb') listenWbData();
+  if(v==='img'){ distImgRefreshUI(); listenDistImgData(); renderDistImgGrid(); }
+  if(v==='group') renderGroupPanel();
+};
+
+// ===== WHITEBOARD =====
+window.sendWbInstruction=async function(){
+  if(!db){toast('⚠️ 先にセッションを開始してください');return;}
+  const text=document.getElementById('wb-instruction').value.trim();
+  if(!text){toast('⚠️ 指示を入力してください');return;}
+  const{ref,set}=window.FB;
+  await set(ref(db,`sessions/${sessionId}/wb/instruction`),text);
+  toast('📤 指示を送りました');
+};
+
+// ===== 画像配布（img view）=====
+let distImgDataUrl = null;
+let distImgActive = false;
+
+window.distImgSelected = function(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { toast('⚠️ 画像は5MB以下にしてください'); input.value=''; return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    distImgDataUrl = e.target.result;
+    const preview = document.getElementById('dist-img-preview');
+    preview.src = distImgDataUrl; preview.style.display = 'block';
+    const nameEl = document.getElementById('dist-img-name');
+    nameEl.textContent = file.name; nameEl.style.display = '';
+    const sendBtn = document.getElementById('dist-img-send-btn');
+    sendBtn.disabled = false; sendBtn.style.opacity = '1';
+    document.getElementById('dist-img-status').textContent = '配布準備完了';
+    toast('🖼️ 画像を選択しました');
+  };
+  reader.readAsDataURL(file);
+};
+
+window.distImgSend = async function() {
+  if (!distImgDataUrl) { toast('⚠️ 先に画像を選択してください'); return; }
+  if (!db) { toast('⚠️ セッションを開始してください'); return; }
+  const {ref, set} = window.FB;
+  toast('📤 画像を配布中...');
+  await set(ref(db, `sessions/${sessionId}/distImg`), { dataUrl: distImgDataUrl, active: true, ts: Date.now() });
+  distImgActive = true;
+  document.getElementById('dist-img-status').textContent = '配布中';
+  document.getElementById('dist-stat-active').textContent = Object.keys(students).length + '人';
+  listenDistImgData();
+  renderDistImgGrid();
+  toast('🖼️ 画像を全員に配布しました');
+};
+
+window.distImgCollect = async function() {
+  if (!db) return;
+  await window.FB.remove(window.FB.ref(db, `sessions/${sessionId}/distImg`));
+  distImgActive = false;
+  distImgSubmissions = {};
+  document.getElementById('dist-img-status').textContent = '回収済み';
+  document.getElementById('dist-stat-active').textContent = '0人';
+  document.getElementById('dist-stat-sub').textContent = '0';
+  document.getElementById('dist-img-grid').style.display = 'none';
+  document.getElementById('dist-img-grid').innerHTML = '';
+  toast('📥 画像を回収・削除しました');
+};
+
+window.distImgClearAll = async function() {
+  if (!confirm('配布中の画像を削除しますか？')) return;
+  if (db) await window.FB.remove(window.FB.ref(db, `sessions/${sessionId}/distImg`));
+  distImgDataUrl = null; distImgActive = false; distImgSubmissions = {};
+  document.getElementById('dist-img-preview').style.display = 'none';
+  document.getElementById('dist-img-preview').src = '';
+  document.getElementById('dist-img-name').style.display = 'none';
+  document.getElementById('dist-img-send-btn').disabled = true;
+  document.getElementById('dist-img-send-btn').style.opacity = '0.4';
+  document.getElementById('dist-img-status').textContent = '画像未選択';
+  document.getElementById('dist-stat-active').textContent = '−';
+  document.getElementById('dist-stat-sub').textContent = '0';
+  document.getElementById('dist-img-input').value = '';
+  document.getElementById('dist-img-grid').style.display = 'none';
+  document.getElementById('dist-img-grid').innerHTML = '';
+  toast('🗑️ 画像を削除しました');
+};
+
+function renderDistImgView() {
+  distImgRefreshUI();
+}
+function distImgRefreshUI() {
+  const statusEl = document.getElementById('dist-img-status');
+  const statEl = document.getElementById('dist-stat-active');
+  if (!statusEl) return;
+  statusEl.textContent = distImgActive ? '📡 配布中' : distImgDataUrl ? '✅ 配布準備完了' : '画像未選択';
+  statEl.textContent = distImgActive ? Object.keys(students).length + '人' : '−';
+}
+
+let distImgSubmissions = {};
+let distImgListening = false;
+
+function listenDistImgData() {
+  if (distImgListening || !db) return;
+  distImgListening = true;
+  const {ref, onValue} = window.FB;
+  // スナップショット（リアルタイム書き込みプレビュー）
+  onValue(ref(db, `sessions/${sessionId}/distImg/snapshots`), snap => {
+    if (!snap.exists()) return;
+    Object.entries(snap.val()).forEach(([sid, imgData]) => {
+      const el = document.getElementById('di-img-'+sid);
+      const ph = document.getElementById('di-ph-'+sid);
+      if (el) { el.src = imgData; el.style.display = 'block'; }
+      if (ph) ph.style.display = 'none';
+    });
+  });
+  // 提出
+  onValue(ref(db, `sessions/${sessionId}/distImg/submissions`), snap => {
+    distImgSubmissions = snap.exists() ? snap.val() : {};
+    const subCount = Object.keys(distImgSubmissions).length;
+    const subEl = document.getElementById('dist-stat-sub');
+    if (subEl) subEl.textContent = subCount;
+    Object.keys(students).forEach(sid => {
+      const badge = document.getElementById('di-sub-'+sid);
+      if (badge) badge.style.display = distImgSubmissions[sid] ? '' : 'none';
+    });
+  });
+  // 描画中
+  onValue(ref(db, `sessions/${sessionId}/distImg/drawing`), snap => {
+    const data = snap.exists() ? snap.val() : {};
+    let drawCount = 0;
+    Object.keys(students).forEach(sid => {
+      const dot = document.getElementById('di-dot-'+sid);
+      if (dot) { dot.style.display = data[sid] ? '' : 'none'; }
+      if (data[sid]) drawCount++;
+    });
+    const drawEl = document.getElementById('dist-stat-drawing');
+    if (drawEl) drawEl.textContent = drawCount;
+  });
+}
+
+function renderDistImgGrid() {
+  const grid = document.getElementById('dist-img-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  const sids = Object.keys(students);
+  if (sids.length === 0) { grid.style.display = 'none'; return; }
+  grid.style.display = 'grid';
+  sids.forEach(sid => {
+    const d = students[sid];
+    const card = document.createElement('div');
+    card.className = 'dist-card';
+    card.id = 'di-card-'+sid;
+    card.innerHTML = `
+      <div class="dist-card-header">
+        <span class="dist-card-name">${d.name||'生徒'}</span>
+        <span class="dist-sub-badge" id="di-sub-${sid}" style="display:none;">提出済</span>
+      </div>
+      <div class="dist-card-body" onclick="openDistImgFullscreen('${sid}')">
+        <img id="di-img-${sid}" src="" style="display:none;" class="dist-card-body img"/>
+        <div class="dist-card-ph" id="di-ph-${sid}">
+          <div style="font-size:20px;">✏️</div>
+          <div>まだ描いていません</div>
+        </div>
+        <div class="dist-draw-dot" id="di-dot-${sid}" style="display:none;"></div>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+window.openDistImgFullscreen = function(sid) {
+  const img = document.getElementById('di-img-'+sid);
+  const sub = distImgSubmissions[sid];
+  const src = sub ? sub.image : (img && img.style.display !== 'none' ? img.src : '');
+  if (!src) { toast('まだ描いていません'); return; }
+  document.getElementById('fs-wb-img').src = src;
+  document.getElementById('fs-wb-name').textContent = students[sid]?.name || '生徒';
+  document.getElementById('fs-wb-overlay').classList.add('show');
+};
+
+window.sendWbCommand=async function(cmd){
+  const{ref,set}=window.FB;
+  if(cmd==='open'){
+    wbActive=true;
+    const instr=document.getElementById('wb-instruction').value.trim();
+    if(instr) await set(ref(db,`sessions/${sessionId}/wb/instruction`),instr);
+    await set(ref(db,`sessions/${sessionId}/wb/active`),true);
+    toast('📋 ホワイトボード配布しました');
+  }
+  else if(cmd==='collect'){
+    await set(ref(db,`sessions/${sessionId}/wb/active`),false);
+    await window.FB.remove(ref(db,`sessions/${sessionId}/wb/snapshots`));
+    wbActive=false;
+    resetAllWbPreviews();
+    toast('📥 ホワイトボードを回収しました');
+  }
+  else if(cmd==='clear'){
+    if(!confirm('全員のホワイトボードを消去しますか？'))return;
+    await set(ref(db,`sessions/${sessionId}/wb/resetTs`),Date.now());
+    await window.FB.remove(ref(db,`sessions/${sessionId}/wb/submissions`));
+    await window.FB.remove(ref(db,`sessions/${sessionId}/wb/snapshots`));
+    wbSubmissions={};updateWbStats();resetAllWbPreviews();toast('🗑️ 全員のホワイトボードを消去しました');
+  }
+};
+
+function listenWbData(){
+  const{ref,onValue}=window.FB;
+  // Listen to wb submissions (canvas snapshots)
+  onValue(ref(db,`sessions/${sessionId}/wb/snapshots`),snap=>{
+    if(!snap.exists())return;
+    const data=snap.val();
+    Object.entries(data).forEach(([sid,imgData])=>{
+      updateCardWbPreview(sid,imgData);
+    });
+  });
+  onValue(ref(db,`sessions/${sessionId}/wb/submissions`),snap=>{
+    wbSubmissions=snap.exists()?snap.val():{};
+    updateWbStats();
+    // Update submitted badges
+    Object.keys(students).forEach(sid=>{
+      const el=document.getElementById('wb-sub-'+sid);
+      if(el)el.style.display=wbSubmissions[sid]?'':'none';
+    });
+  });
+  onValue(ref(db,`sessions/${sessionId}/wb/drawing`),snap=>{
+    if(!snap.exists())return;
+    const data=snap.val();
+    Object.entries(data).forEach(([sid,isDrawing])=>{
+      const el=document.getElementById('wb-dot-'+sid);
+      if(el)el.style.display=isDrawing?'':'none';
+    });
+    updateWbStats();
+  });
+}
+
+function updateCardWbPreview(sid,imgData){
+  const img=document.getElementById('wb-img-'+sid);
+  const ph=document.getElementById('wb-ph-'+sid);
+  if(img&&imgData){img.src=imgData;img.style.display='block';if(ph)ph.style.display='none';}
+}
+
+function resetAllWbPreviews(){
+  Object.keys(students).forEach(sid=>{
+    const img=document.getElementById("wb-img-"+sid);
+    const ph=document.getElementById("wb-ph-"+sid);
+    if(img){img.src="";img.style.display="none";}
+    if(ph)ph.style.display="";
+    const dot=document.getElementById("wb-dot-"+sid);
+    if(dot)dot.style.display="none";
+    const sub=document.getElementById("wb-sub-"+sid);
+    if(sub)sub.style.display="none";
+  });
+}
+
+function updateWbStats(){
+  const open=Object.keys(students).length;
+  const sub=Object.keys(wbSubmissions).length;
+  const drawEl=document.querySelectorAll('.wb-drawing-dot:not([style*="none"])').length;
+  document.getElementById('wb-stat-open').textContent=open;
+  document.getElementById('wb-stat-sub').textContent=sub;
+  document.getElementById('wb-stat-drawing').textContent=drawEl;
+}
+
+window.openWbFullscreen=function(sid){
+  const img=document.getElementById('wb-img-'+sid);
+  if(!img||!img.src||img.style.display==='none'){
+    // Try submission
+    if(wbSubmissions[sid]){
+      document.getElementById('fs-wb-img').src=wbSubmissions[sid].image;
+    } else { toast('まだ描いていません'); return; }
+  } else {
+    document.getElementById('fs-wb-img').src=img.src;
+  }
+  wbLbKeys=Object.keys(students);
+  wbLbIdx=wbLbKeys.indexOf(sid);
+  document.getElementById('fs-wb-name').textContent=students[sid]?.name||'生徒';
+  document.getElementById('fs-wb-nav').textContent=`${wbLbIdx+1} / ${wbLbKeys.length}`;
+  document.getElementById('fs-wb-overlay').classList.add('show');
+};
+window.closeWbFullscreen=function(){document.getElementById('fs-wb-overlay').classList.remove('show');};
+window.wbLbNav=function(dir){
+  wbLbIdx=(wbLbIdx+dir+wbLbKeys.length)%wbLbKeys.length;
+  const sid=wbLbKeys[wbLbIdx];
+  const img=document.getElementById('wb-img-'+sid);
+  if(img&&img.src&&img.style.display!=='none') document.getElementById('fs-wb-img').src=img.src;
+  else if(wbSubmissions[sid]) document.getElementById('fs-wb-img').src=wbSubmissions[sid].image;
+  document.getElementById('fs-wb-name').textContent=students[sid]?.name||'生徒';
+  document.getElementById('fs-wb-nav').textContent=`${wbLbIdx+1} / ${wbLbKeys.length}`;
+};
+
+// ===== LISTEN =====
+function listenStudents(){
+  const{ref,onChildAdded,onChildChanged,onChildRemoved,onValue}=window.FB;
+  onChildAdded(ref(db,`sessions/${sessionId}/students`),snap=>{
+    const sid=snap.key,d=snap.val();
+    if(!students[sid]){
+      students[sid]={...d,id:sid};
+      addCard(sid,d);
+      // 参加時点でsharingなら即接続、waitingなら共有開始を待つ
+      if(d.status==='sharing') setupPC(sid);
+      // ③ 離脱検知の監視開始
+      listenAwayStatus(sid, db, sessionId);
+    }
+  });
+  onChildChanged(ref(db,`sessions/${sessionId}/students`),snap=>{
+    const sid=snap.key,d=snap.val();
+    if(students[sid])students[sid]={...students[sid],...d};
+    if(d.shareType)updateShareType(sid,d.shareType);
+    // status が含まれていない変化（shareType だけ等）は無視
+    if(!d.hasOwnProperty('status'))return;
+    if(d.status==='waiting'){
+      const v=document.getElementById('v-'+sid);
+      const ph=document.getElementById('ph-'+sid);
+      if(v){v.srcObject=null;v.style.display='none';}
+      if(ph)ph.style.display='';
+      setBadge(sid,'waiting');updateStats();
+    }
+    if(d.status==='sharing'){
+      setupPC(sid);
+    }
+    // 班別表示も更新
+    if(currentView==='group') renderGroupMonitorGrid();
+  });
+  onChildRemoved(ref(db,`sessions/${sessionId}/students`),snap=>removeCard(snap.key));
+  window.FB.onChildAdded(ref(db,`sessions/${sessionId}/signals`),snap=>{
+    const sig=snap.val();
+    if(!sig||sig.to!=='teacher')return;
+    if(sig.type==='answer')handleAnswer(sig.from,sig.sdp);
+    else if(sig.type==='ice')handleRIce(sig.from,sig.candidate);
+    else if(sig.type==='tw-answer')handleTWAnswer(sig.from,sig.sdp);
+    else if(sig.type==='tw-ice')handleTWIce(sig.from,sig.candidate);
+    else if(sig.type==='watch-answer')handleWatchAnswer(sig.from,sig.sdp);
+    else if(sig.type==='watch-answer-ice')handleWatchAnswerIce(sig.from,sig.candidate);
+  });
+  startListenAnswers();
+}
+
+// ===== WebRTC Monitoring =====
+let reconnectTimers={};
+
+async function setupPC(sid){
+  if(peerConnections[sid]){try{peerConnections[sid].close();}catch(e){}}
+  // 古いシグナルをクリア（再接続時の誤作動防止）
+  const{ref,remove}=window.FB;
+  try{await remove(ref(db,`sessions/${sessionId}/signals`));}catch(e){}
+  const pc=new RTCPeerConnection(ICE);peerConnections[sid]=pc;
+
+  pc.ontrack=ev=>{
+    const v=document.getElementById('v-'+sid),ph=document.getElementById('ph-'+sid);
+    if(v){
+      if(ev.streams&&ev.streams[0]){v.srcObject=ev.streams[0];}
+      else{const ms=new MediaStream();ms.addTrack(ev.track);v.srcObject=ms;}
+      v.play().catch(()=>{});
+      v.style.display='block';if(ph)ph.style.display='none';setBadge(sid,'live');updateStats();
+    }
+  };
+  pc.onicecandidate=ev=>{if(ev.candidate)sig(sid,{type:'ice',from:'teacher',to:sid,candidate:ev.candidate.toJSON()});};
+
+  pc.onconnectionstatechange=()=>{
+    const state=pc.connectionState;
+    if(state==='connected'){
+      const v=document.getElementById('v-'+sid);if(v&&v.srcObject)v.play().catch(()=>{});
+      setBadge(sid,'live');updateStats();
+    }
+    // failedのみ即再接続。disconnectedは一時的な場合が多いためICE再起動で様子見
+    if(state==='failed'){
+      clearTimeout(reconnectTimers[sid]);
+      setBadge(sid,'waiting');updateStats();
+      setTimeout(()=>{if(students[sid]&&peerConnections[sid]===pc)setupPC(sid);},2000);
+    }
+    if(state==='closed'){setBadge(sid,'waiting');updateStats();}
+  };
+
+  pc.oniceconnectionstatechange=()=>{
+    const iceState=pc.iceConnectionState;
+    if(iceState==='connected'||iceState==='completed'){
+      const v=document.getElementById('v-'+sid);if(v&&v.srcObject)v.play().catch(()=>{});
+      setBadge(sid,'live');updateStats();
+    }
+    // disconnectedは10秒様子見してからICE再起動
+    if(iceState==='disconnected'){
+      reconnectTimers[sid]=setTimeout(async()=>{
+        if(!peerConnections[sid]||peerConnections[sid]!==pc)return;
+        if(pc.iceConnectionState!=='disconnected')return;
+        console.log('[ICE] disconnected > 10s, restarting:',sid);
+        try{
+          const offer=await pc.createOffer({iceRestart:true,offerToReceiveVideo:true,offerToReceiveAudio:false});
+          await pc.setLocalDescription(offer);
+          sig(sid,{type:'offer',from:'teacher',to:sid,sdp:{type:offer.type,sdp:offer.sdp}});
+        }catch(e){if(students[sid])setupPC(sid);}
+      },10000);
+    } else {
+      clearTimeout(reconnectTimers[sid]);
+    }
+    if(iceState==='failed'){
+      clearTimeout(reconnectTimers[sid]);
+      if(students[sid]&&peerConnections[sid]===pc)setupPC(sid);
+    }
+  };
+
+  const offer=await pc.createOffer({offerToReceiveVideo:true,offerToReceiveAudio:false});
+  await pc.setLocalDescription(offer);
+  sig(sid,{type:'offer',from:'teacher',to:sid,sdp:{type:offer.type,sdp:offer.sdp}});
+}
+async function handleAnswer(sid,sdp){
+  const pc=peerConnections[sid];if(!pc)return;
+  // signalingStateがhave-local-offerでないと失敗するが、iceRestartのケースも考慮
+  if(pc.signalingState!=='have-local-offer'){console.warn('[answer ignored, state:'+pc.signalingState+']');return;}
+  try{await pc.setRemoteDescription(new RTCSessionDescription(sdp));}catch(e){console.error('[setRemoteDesc]',e);}
+}
+async function handleRIce(sid,c){const pc=peerConnections[sid];if(!pc)return;try{await pc.addIceCandidate(new RTCIceCandidate(c));}catch(e){}}
+
+// ===== Teacher screen → students =====
+let twPcs={};
+window.toggleTeacherShare=async function(){teacherSharing?stopTS():await startTS();};
+async function startTS(){
+  try{
+    teacherStream=await navigator.mediaDevices.getDisplayMedia({
+      video:{
+        width:{ideal:3840,max:3840},
+        height:{ideal:2160,max:2160},
+        frameRate:{ideal:60,max:60},
+        displaySurface:'monitor',
+        latencyHint:0
+      },
+      audio:false
+    });
+    teacherSharing=true;
+    document.getElementById('tshare-btn').textContent='⏹ 共有停止';
+    document.getElementById('tshare-btn').style.background='var(--red)';
+    teacherStream.getVideoTracks()[0].onended=()=>stopTS();
+    const {ref,set}=window.FB;
+        cmd('all','teacherShare',{});
+    set(ref(db,`sessions/${sessionId}/teacherSharing`),true);
+    for(const sid of Object.keys(students))await setupTWPc(sid);
+    toast('📺 先生の画面を全員に配信中');
+  }catch(e){console.error('[startTS]',e);if(e.name!=='NotAllowedError')toast('❌ 画面共有エラー: '+e.message);}
+}
+function stopTS(){
+  if(teacherStream){teacherStream.getTracks().forEach(t=>t.stop());teacherStream=null;}
+  teacherSharing=false;
+  document.getElementById('tshare-btn').textContent='📺 画面を共有';
+  document.getElementById('tshare-btn').style.background='';
+  cmd('all','stopTeacherShare',{});
+  // フォールバック: teacherSharing ノードに false を書き込む
+  const {ref,set}=window.FB;
+  set(ref(db,`sessions/${sessionId}/teacherSharing`),false);
+  for(const sid of Object.keys(twPcs))twPcs[sid]?.close();
+  twPcs={};
+  toast('⏹ 先生の画面共有を停止しました');
+}
+// 送信ビットレートを上げるヘルパー（teacher→生徒 配信用）
+async function setHighBitrate(pc, kbps=8000){
+  const senders = pc.getSenders();
+  for(const sender of senders){
+    if(!sender.track || sender.track.kind !== 'video') continue;
+    try{
+      const params = sender.getParameters();
+      if(!params.encodings || params.encodings.length === 0) params.encodings = [{}];
+      params.encodings[0].maxBitrate = kbps * 1000;
+      params.encodings[0].maxFramerate = 60;
+      params.encodings[0].priority = 'high';
+      params.encodings[0].networkPriority = 'high';
+      await sender.setParameters(params);
+      // contentHint でスクリーン共有に最適化
+      if (sender.track) sender.track.contentHint = 'detail';
+      console.log('[bitrate] set to', kbps, 'kbps');
+    } catch(e){ console.warn('[setParameters]', e); }
+  }
+}
+
+async function setupTWPc(sid){
+  console.log('[TW] setupTWPc for', sid, 'stream:', !!teacherStream);
+  if(!teacherStream){console.warn('[TW] no teacherStream');return;}
+  try{
+    if(twPcs[sid]){try{twPcs[sid].close();}catch(e){}}
+    const pc=new RTCPeerConnection(ICE);twPcs[sid]=pc;
+    const tracks=teacherStream.getTracks();
+    console.log('[TW] adding tracks:', tracks.length, tracks.map(t=>t.kind));
+    tracks.forEach(tr=>pc.addTrack(tr,teacherStream));
+    pc.onicecandidate=ev=>{if(ev.candidate)sig(sid,{type:'tw-ice-offer',from:'teacher',to:sid,candidate:ev.candidate.toJSON()});};
+    pc.onconnectionstatechange=()=>{
+      console.log('[TW->'+sid+']',pc.connectionState);
+      if(pc.connectionState==='connected') setHighBitrate(pc,8000);
+    };
+    const offer=await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    sig(sid,{type:'tw-offer',from:'teacher',to:sid,sdp:{type:offer.type,sdp:offer.sdp}});
+    console.log('[TW] offer sent to',sid);
+  }catch(e){console.error('[setupTWPc]',e);toast('❌ 先生画面配信エラー: '+e.message);}
+}
+async function handleTWAnswer(sid,sdp){const pc=twPcs[sid];if(!pc){console.warn('[TW] no pc for',sid);return;}try{await pc.setRemoteDescription(new RTCSessionDescription(sdp));console.log('[TW] remoteDesc set for',sid);}catch(e){console.error('[handleTWAnswer]',e);}}
+async function handleTWIce(sid,c){const pc=twPcs[sid];if(!pc)return;try{await pc.addIceCandidate(new RTCIceCandidate(c));}catch(e){}}
+
+// ===== Student screen broadcast =====
+let studentBcastPcs={};
+window.broadcastStudentScreen=function(sid){
+  if(!sid){toast('生徒を選択してください');return;}
+  const srcPc=peerConnections[sid];
+  // PCがない、またはliveなトラックがない場合: video要素のsrcObjectから試みる
+  let stream=null;
+  if(srcPc){
+    const tracks=srcPc.getReceivers().map(r=>r.track).filter(t=>t&&t.readyState==='live');
+    if(tracks.length>0) stream=new MediaStream(tracks);
+  }
+  // フォールバック: video要素のsrcObjectを使う
+  if(!stream){
+    const v=document.getElementById('v-'+sid);
+    if(v&&v.srcObject){
+      const tracks=[...v.srcObject.getTracks()].filter(t=>t.readyState==='live');
+      if(tracks.length>0) stream=new MediaStream(tracks);
+    }
+  }
+  if(!stream){
+    console.warn('[broadcastStudentScreen] no stream for',sid, 'pc:',srcPc?.connectionState);
+    toast('この生徒の映像が取得できません（共有中か確認してください）');
+    return;
+  }
+  if(currentBroadcastId)stopBcast();
+  currentBroadcastId=sid;
+  document.getElementById('card-'+sid)?.classList.add('focused');
+  startStudentBroadcast(sid,stream);
+  toast(`📡 ${students[sid]?.name||'生徒'}の画面を全員に共有中`);
+};
+async function startStudentBroadcast(sourceSid,stream){
+  for(const sid of Object.keys(students)){
+    if(sid===sourceSid)continue;
+    await setupStudentBcastPc(sid,stream);
+  }
+}
+async function setupStudentBcastPc(sid,stream){
+  try{
+    if(studentBcastPcs[sid]){try{studentBcastPcs[sid].close();}catch(e){}}
+    const pc=new RTCPeerConnection(ICE);studentBcastPcs[sid]=pc;
+    stream.getTracks().forEach(t=>pc.addTrack(t,stream));
+    pc.onicecandidate=ev=>{if(ev.candidate)sig(sid,{type:'watch-ice',from:'teacher',to:sid,candidate:ev.candidate.toJSON()});};
+    pc.onconnectionstatechange=()=>{
+      console.log('[Watch->'+sid+']',pc.connectionState);
+      if(pc.connectionState==='connected') setHighBitrate(pc,6000);
+    };
+    const offer=await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    sig(sid,{type:'watch-offer',from:'teacher',to:sid,sdp:{type:offer.type,sdp:offer.sdp}});
+    console.log('[Watch] offer sent to',sid);
+  }catch(e){console.error('[setupStudentBcastPc]',e);toast('❌ 生徒画面配信エラー: '+e.message);}
+}
+window.stopBroadcastScreen=function(){if(!currentBroadcastId){toast('共有中の画面はありません');return;}stopBcast();toast('⏹ 画面共有を停止しました');};
+function stopBcast(){if(!currentBroadcastId)return;cmd('all','stopWatch',{});document.getElementById('card-'+currentBroadcastId)?.classList.remove('focused');currentBroadcastId=null;for(const sid of Object.keys(studentBcastPcs))studentBcastPcs[sid]?.close();studentBcastPcs={};}
+async function handleWatchAnswer(sid,sdp){const pc=studentBcastPcs[sid];if(!pc){console.warn('[Watch] no pc for',sid);return;}try{await pc.setRemoteDescription(new RTCSessionDescription(sdp));console.log('[Watch] remoteDesc set for',sid);}catch(e){console.error('[handleWatchAnswer]',e);}}
+async function handleWatchAnswerIce(sid,c){const pc=studentBcastPcs[sid];if(!pc)return;try{await pc.addIceCandidate(new RTCIceCandidate(c));}catch(e){}}
+
+// ===== Focus =====
+window.focusStudent=function(sid){if(!sid)return;cmd(sid,'focus');students[sid].focused=true;document.getElementById('card-'+sid)?.classList.add('focused');setBadge(sid,'focused');document.getElementById('fb-'+sid)?.classList.add('af');updateStats();toast('🎯 集中画面を表示しました');};
+window.unfocusStudent=function(sid){if(!sid)return;cmd(sid,'unfocus');if(students[sid])students[sid].focused=false;document.getElementById('card-'+sid)?.classList.remove('focused');setBadge(sid,'live');document.getElementById('fb-'+sid)?.classList.remove('af');updateStats();toast('✅ 集中を解除しました');};
+window.broadcastFocus=function(){cmd('all','focus');Object.keys(students).forEach(sid=>{students[sid].focused=true;document.getElementById('card-'+sid)?.classList.add('focused');setBadge(sid,'focused');document.getElementById('fb-'+sid)?.classList.add('af');});updateStats();toast('🎯 全員に集中画面を表示しました');};
+window.broadcastUnfocus=function(){cmd('all','unfocus');Object.keys(students).forEach(sid=>{if(students[sid])students[sid].focused=false;document.getElementById('card-'+sid)?.classList.remove('focused');setBadge(sid,'live');document.getElementById('fb-'+sid)?.classList.remove('af');});updateStats();toast('✅ 全員の集中を解除しました');};
+
+// ===== Survey =====
+window.openSurvey=function(t){surveyType=t;document.getElementById('survey-panel').classList.add('show');switchTab(t);};
+window.closeSurvey=function(){document.getElementById('survey-panel').classList.remove('show');};
+window.switchTab=function(t){surveyType=t;document.getElementById('tab-choice').classList.toggle('active',t==='choice');document.getElementById('tab-free').classList.toggle('active',t==='free');document.getElementById('choice-sec').style.display=t==='choice'?'':'none';document.getElementById('free-sec').style.display=t==='free'?'':'none';};
+window.addChoice=function(){const c=document.getElementById('choices');const n=c.children.length;if(n>=8){toast('最大8つです');return;}const row=document.createElement('div');row.className='choice-row';row.innerHTML=`<span class="clabel">${LABELS[n]}</span><input type="text" class="si ci" placeholder="選択肢${LABELS[n]}"/><button class="rm-ch" onclick="removeChoice(this)">✕</button>`;c.appendChild(row);if(n+1>=8)document.getElementById('add-ch-btn').style.display='none';updateRmBtns();};
+window.removeChoice=function(btn){const c=document.getElementById('choices');btn.closest('.choice-row').remove();Array.from(c.children).forEach((row,i)=>{row.querySelector('.clabel').textContent=LABELS[i];row.querySelector('input').placeholder='選択肢'+LABELS[i];});document.getElementById('add-ch-btn').style.display='';updateRmBtns();};
+function updateRmBtns(){const rows=Array.from(document.getElementById('choices').children);rows.forEach(row=>{const b=row.querySelector('.rm-ch');if(b)b.style.display=rows.length>2?'':'none';});}
+window.startSurvey=async function(){
+  const q=document.getElementById('sq').value.trim();
+  if(!q){toast('⚠️ 質問文を入力してください');return;}
+  let choices=[];
+  if(surveyType==='choice'){
+    choices=Array.from(document.querySelectorAll('.ci')).map(i=>i.value.trim()).filter(Boolean);
+    if(choices.length<2){toast('⚠️ 選択肢を2つ以上入力してください');return;}
+  }
+  const{ref,set,remove}=window.FB;
+  // 前の回答をクリア
+  await remove(ref(db,`sessions/${sessionId}/surveyAnswers`));
+  // survey ノードに書き込む（choices は配列のまま保存）
+  const surveyData={type:surveyType,question:q,choices:choices,active:true,ts:Date.now()};
+  await set(ref(db,`sessions/${sessionId}/survey`),surveyData);
+  // cmds は使わない（onValue で生徒が自動検知）
+  surveyActive=true;namesVisible=false;
+  _surveyCurrentData=surveyData;
+  _surveyAnswers={};
+  document.getElementById('survey-panel').classList.remove('show');
+  document.getElementById('results-panel').classList.add('show');
+  document.getElementById('rtitle').textContent=surveyType==='choice'?'📊 リアルタイム集計':'✏️ 自由記述回答';
+  document.getElementById('rq').textContent=q;
+  document.getElementById('name-toggle-area').style.display='';
+  document.getElementById('ntbtn').textContent='👤 名前を表示';
+  startListenAnswers();
+  renderResultsUI();
+  toast('📤 アンケートを送信しました');
+};
+window.endSurvey=async function(){const{ref,set}=window.FB;await set(ref(db,`sessions/${sessionId}/survey/active`),false);surveyActive=false;if(_surveyAnswersUnsub){_surveyAnswersUnsub();_surveyAnswersUnsub=null;}closeResults();toast('🛑 アンケートを終了しました');};
+window.closeResults=function(){document.getElementById('results-panel').classList.remove('show');};
+window.toggleNames=function(){
+  namesVisible=!namesVisible;
+  document.getElementById('ntbtn').textContent=namesVisible?'👤 名前を非表示':'👤 名前を表示';
+  // 自由記述の名前
+  document.querySelectorAll('.free-name').forEach(el=>el.classList.toggle('hidden',!namesVisible));
+  // 選択式の投票者名
+  document.querySelectorAll('.bar-voters').forEach(el=>el.classList.toggle('hidden',!namesVisible));
+};
+// アンケート結果のインメモリキャッシュ
+let _surveyAnswers = {};
+let _surveyCurrentData = null;
+let _surveyAnswersUnsub = null;
+
+function startListenAnswers() {
+  if (_surveyAnswersUnsub) { _surveyAnswersUnsub(); _surveyAnswersUnsub = null; }
+  const {ref, onValue} = window.FB;
+  _surveyAnswersUnsub = onValue(ref(db, `sessions/${sessionId}/surveyAnswers`), snap => {
+    _surveyAnswers = snap.exists() ? snap.val() : {};
+    if (surveyActive) renderResultsUI();
+  });
+}
+
+function renderResultsUI() {
+  const sv = _surveyCurrentData;
+  const rc = document.getElementById('rcontent');
+  if (!sv || !rc) return;
+  const answers = _surveyAnswers;
+  if (sv.type === 'choice') renderChoice(sv, answers, rc);
+  else renderFree(answers, rc);
+}
+
+function renderChoice(sv, answers, c) {
+  const choices = Array.isArray(sv.choices) ? sv.choices : Object.values(sv.choices || {});
+  const votes = {}; const vnames = {};
+  choices.forEach(ch => { votes[ch] = 0; vnames[ch] = []; });
+  Object.values(answers).forEach(a => {
+    if (votes[a.answer] !== undefined) { votes[a.answer]++; vnames[a.answer].push(a.name); }
+  });
+  const total = Object.values(answers).length;
+  const cols = ['bc0','bc1','bc2','bc3','bc4','bc5','bc6','bc7'];
+  c.innerHTML = choices.map((ch, i) => {
+    const cnt = votes[ch] || 0;
+    const pct = total > 0 ? Math.round(cnt / total * 100) : 0;
+    const names = vnames[ch].join('、');
+    const hiddenClass = namesVisible ? '' : 'hidden';
+    return `<div class="bar-row"><div class="bar-label"><span>${LABELS[i]}. ${esc(ch)}</span><span class="bar-count">${cnt}票 (${pct}%)</span></div><div class="bar-track"><div class="bar-fill ${cols[i]}" style="width:${pct}%">${pct>15?pct+'%':''}</div></div>${names?`<div class="bar-voters ${hiddenClass}">${esc(names)}</div>`:''}</div>`;
+  }).join('') + `<div style="margin-top:10px;font-size:11px;color:var(--muted);">回答数: ${total} / ${Object.keys(students).length}人</div>`;
+}
+
+function renderFree(answers, c) {
+  const items = Object.values(answers);
+  const total = Object.keys(students).length;
+  c.innerHTML = items.length === 0
+    ? `<div style="text-align:center;color:var(--muted);padding:22px;font-size:13px;">まだ回答がありません</div>`
+    : items.map(a => `<div class="free-item"><div class="free-text">${esc(a.answer)}</div><div class="free-name${namesVisible?'':' hidden'}">— ${esc(a.name)}</div></div>`).join('')
+      + `<div style="margin-top:7px;font-size:11px;color:var(--muted);">回答数: ${items.length} / ${total}人</div>`;
+}
+
+// 後方互換（古い呼び出し箇所があれば対応）
+function renderResults(answers) { renderResultsUI(); }
+
+// ===== Messages =====
+window.openMsgModal=function(sid){msgTargetId=sid;document.getElementById('mtarget').textContent=sid?`送信先: ${students[sid]?.name||'生徒'}`:'送信先: 全員';document.getElementById('minput').value='';document.getElementById('msg-modal').classList.add('show');setTimeout(()=>document.getElementById('minput').focus(),100);};
+window.closeMsgModal=function(){document.getElementById('msg-modal').classList.remove('show');};
+window.setQM=function(t){document.getElementById('minput').value=t;document.getElementById('minput').focus();};
+window.sendMessage=function(){const text=document.getElementById('minput').value.trim();if(!text){toast('⚠️ メッセージを入力してください');return;}cmd(msgTargetId||'all','message',{text});closeMsgModal();toast('💬 送信しました');};
+
+function sig(to,data){const{ref,set}=window.FB;set(ref(db,`sessions/${sessionId}/signals/${data.from}_${to}_${Date.now()}`),data);}
+function cmd(target,command,extra={}){const{ref,set,push}=window.FB;const k=Date.now()+'_'+Math.random().toString(36).slice(2,6);set(ref(db,`sessions/${sessionId}/cmds/${target}/${k}`),{command,...extra,ts:Date.now()});}
+function sendMsg(target) {
+  const msg = prompt(target === 'all' ? '全員へのメッセージ:' : `${students[target]?.name || target} へのメッセージ:`);
+  if (!msg) return;
+  cmd(target, 'message', {text: msg});
+  toast(`メッセージを送りました`);
+}
+window.sendMsgToAll = () => sendMsg('all');
+window.sendMsgToStudent = (sid) => sendMsg(sid);
+
+// ===== Cards =====
+// ③ 離脱検知リスナー
+function listenAwayStatus(sid, db, sessionId) {
+  const { ref, onValue } = window.FB;
+  onValue(ref(db, `sessions/${sessionId}/students/${sid}/away`), snap => {
+    if (!snap.exists()) return;
+    const d = snap.val();
+    const card = document.getElementById('card-' + sid);
+    if (!card) return;
+
+    let badge = card.querySelector('.away-badge');
+    if (!badge) {
+      badge = document.createElement('span');
+      badge.className = 'away-badge';
+      const header = card.querySelector('.card-header');
+      if (header) header.appendChild(badge);
+    }
+
+    if (d.isAway) {
+      badge.textContent = `離脱中 ${d.count}回目`;
+      badge.style.cssText = 'background:#ef4444;color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;animation:awayPulse 1s infinite;';
+      card.style.boxShadow = '0 0 0 2px #ef4444';
+      card.style.borderColor = '#ef4444';
+    } else {
+      badge.textContent = `離脱${d.count}回`;
+      badge.style.cssText = d.count > 0
+        ? 'background:#f59e0b;color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;'
+        : '';
+      card.style.boxShadow = '';
+      card.style.borderColor = '';
+      if (d.count === 0) badge.remove();
+    }
+  });
+}
+
+function addCard(sid,data){
+  document.getElementById('empty-state').style.display='none';
+  const name=data.name||`生徒${Object.keys(students).length}`;
+  const initial=name.charAt(0);
+  const now=new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'});
+  const card=document.createElement('div');card.className='student-card';card.id='card-'+sid;
+  const avHtml=data.photoURL?`<img class="avatar" src="${data.photoURL}" alt="">`:`<div class="avatar-ph">${initial}</div>`;
+  card.innerHTML=`
+    <div class="card-header">
+      <div class="student-info">${avHtml}<div style="min-width:0"><div class="sname"><span>${esc(name)}</span><span class="share-type" id="st-${sid}" style="display:none;"></span></div><div class="semail">${esc(data.email||'')}</div></div></div>
+      <span class="badge badge-waiting" id="badge-${sid}">待機中</span>
+    </div>
+    <div id="content-${sid}"></div>
+    <div class="card-footer">
+      <span class="jtime">${now}</span>
+      <div class="card-actions" id="actions-${sid}"></div>
+    </div>`;
+  const grid = document.getElementById('grid');
+  const existingCards = [...grid.querySelectorAll('.student-card')];
+  const insertBefore = existingCards.find(c => {
+    const sid2 = c.id.replace('card-', '');
+    const name2 = students[sid2]?.name || '';
+    return name.localeCompare(name2) < 0;
+  });
+  if (insertBefore) grid.insertBefore(card, insertBefore);
+  else grid.appendChild(card);
+  updateCardContent(sid);
+  if(teacherSharing)setupTWPc(sid);
+  updateStats();
+}
+
+function updateCardContent(sid){
+  if(currentView==='group') return;
+  const contentEl=document.getElementById('content-'+sid);
+  const actionsEl=document.getElementById('actions-'+sid);
+  if(!contentEl)return;
+  if(currentView==='monitor'){
+    contentEl.innerHTML=`
+      <div class="screen-area" onclick="openFullscreen('${sid}')">
+        <video id="v-${sid}" autoplay playsinline></video>
+        <div class="screen-ph" id="ph-${sid}"><div class="screen-ph-icon">⏳</div><div class="screen-ph-text">画面共有を待っています</div></div>
+      </div>`;
+    actionsEl.innerHTML=`
+      <button class="icon-btn" id="fb-${sid}" onclick="focusStudent('${sid}')">🎯</button>
+      <button class="icon-btn" onclick="unfocusStudent('${sid}')">✅</button>
+      <button class="icon-btn" onclick="broadcastStudentScreen('${sid}')">📡</button>
+      <button class="icon-btn" onclick="openMsgModal('${sid}')">💬</button>
+      <button class="icon-btn" onclick="openFullscreen('${sid}')">⛶</button>`;
+    // ビュー切替後に既存ストリームを新しいvideo要素に再アタッチ
+    const pc=peerConnections[sid];
+    if(pc){
+      const receivers=pc.getReceivers();
+      if(receivers.length>0){
+        const stream=new MediaStream(receivers.map(r=>r.track).filter(t=>t.readyState==='live'));
+        if(stream.getTracks().length>0){
+          const v=document.getElementById('v-'+sid);
+          const ph=document.getElementById('ph-'+sid);
+          if(v){
+            v.srcObject=stream;
+            v.play().catch(()=>{});
+            v.style.display='block';
+            if(ph)ph.style.display='none';
+            setBadge(sid,'live');
+          }
+        }
+      }
+    }
+  } else {
+    // Whiteboard view
+    contentEl.innerHTML=`
+      <div class="wb-area" onclick="openWbFullscreen('${sid}')">
+        <img id="wb-img-${sid}" src="" alt="" class="wb-canvas-preview" style="display:none;"/>
+        <div class="wb-ph" id="wb-ph-${sid}"><div class="wb-ph-icon">✏️</div><div class="wb-ph-text">まだ描いていません</div></div>
+        <div class="wb-submitted-badge" id="wb-sub-${sid}" style="display:none;">提出済</div>
+        <div class="wb-drawing-dot" id="wb-dot-${sid}" style="display:none;"></div>
+      </div>`;
+    actionsEl.innerHTML=`
+      <button class="icon-btn" onclick="openWbFullscreen('${sid}')">⛶ 拡大</button>
+      <button class="icon-btn" onclick="openMsgModal('${sid}')">💬</button>`;
+  }
+}
+
+function removeCard(sid){
+  document.getElementById('card-'+sid)?.remove();
+  clearTimeout(reconnectTimers[sid]);delete reconnectTimers[sid];
+  peerConnections[sid]?.close();delete peerConnections[sid];
+  twPcs[sid]?.close();delete twPcs[sid];
+  studentBcastPcs[sid]?.close();delete studentBcastPcs[sid];
+  delete students[sid];
+  if(currentBroadcastId===sid)stopBcast();
+  updateStats();
+  if(Object.keys(students).length===0)document.getElementById('empty-state').style.display='';
+}
+
+function updateShareType(sid,t){const el=document.getElementById('st-'+sid);if(!el)return;el.style.display='';const ok=t==='画面全体';el.textContent=t;el.className='share-type '+(ok?'st-ok':'st-warn');}
+function setBadge(sid,status){const b=document.getElementById('badge-'+sid);if(!b)return;const map={live:['badge-live','LIVE'],waiting:['badge-waiting','待機中'],focused:['badge-focused','🎯 集中中']};b.className='badge '+(map[status]?.[0]||'badge-waiting');b.textContent=map[status]?.[1]||'待機中';}
+function updateStats(){const total=Object.keys(students).length;let s=0,f=0;document.querySelectorAll('.badge-live').forEach(()=>s++);document.querySelectorAll('.badge-focused').forEach(()=>f++);document.getElementById('stat-c').textContent=total;document.getElementById('stat-s').textContent=s;document.getElementById('stat-f').textContent=f;}
+
+window.openFullscreen=function(sid){
+  const v=document.getElementById('v-'+sid);if(!v||!v.srcObject){toast('まだ画面共有されていません');return;}
+  window.currentFsId=sid;document.getElementById('fs-video').srcObject=v.srcObject;document.getElementById('fs-name').textContent=students[sid]?.name||'生徒';document.getElementById('fs-id').textContent=students[sid]?.email||'';document.getElementById('fs-overlay').classList.add('show');
+};
+window.closeFullscreen=function(){document.getElementById('fs-overlay').classList.remove('show');document.getElementById('fs-video').srcObject=null;window.currentFsId=null;};
+window.copyUrl=function(){navigator.clipboard.writeText(document.getElementById('share-url').textContent).then(()=>{const b=document.getElementById('copy-btn');b.textContent='✓ コピー済';b.classList.add('copied');setTimeout(()=>{b.textContent='コピー';b.classList.remove('copied');},2000);});};
+window.updateGridSize=function(){document.getElementById('grid').style.gridTemplateColumns=`repeat(${document.getElementById('grid-size').value},1fr)`;};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){window.closeFullscreen();closeWbFullscreen();closeMsgModal();closeSurvey();closeResults();if(window.closeGroupMsgModal)window.closeGroupMsgModal();if(window.closeGroupZoom)window.closeGroupZoom();}if(e.key==='ArrowLeft')wbLbNav(-1);if(e.key==='ArrowRight')wbLbNav(1);});
+
+
+// ===== 班別学習 =====
+let groupDefs = {};      // {groupId: {name, members:{uid:true}}}
+let groupListeners = {}; // groupId → unsubscribe関数
+
+function renderGroupPanel() {
+  const saved = Object.keys(groupDefs).length > 0;
+  document.getElementById('group-assign-area').style.display = saved ? 'none' : 'none';
+  document.getElementById('group-content-area').style.display = saved ? 'block' : 'none';
+  if (saved) renderGroupContentArea();
+}
+
+// 班を作成（列UIを表示）
+window.initGroups = function() {
+  const raw = document.getElementById('group-count').value.trim();
+  const n = Number(raw);
+  if (!raw || !Number.isInteger(n) || n < 2 || n > 10) { toast('⚠️ 班の数を2〜10の整数で入力してください'); return; }
+  groupDefs = {};
+  for (let i = 1; i <= n; i++) {
+    const gid = 'g' + i;
+    groupDefs[gid] = { name: `班${i}`, members: {} };
+  }
+  renderAssignUI();
+  document.getElementById('group-assign-area').style.display = 'block';
+  document.getElementById('group-content-area').style.display = 'none';
+};
+
+// 自動振り分け
+window.autoAssignGroups = function() {
+  const raw = document.getElementById('group-count').value.trim();
+  const n = Number(raw);
+  if (!raw || !Number.isInteger(n) || n < 2 || n > 10) { toast('⚠️ 班の数を2〜10の整数で入力してください'); return; }
+  groupDefs = {};
+  for (let i = 1; i <= n; i++) groupDefs['g'+i] = { name:`班${i}`, members:{} };
+  const uids = Object.keys(students);
+  uids.sort(() => Math.random() - 0.5);
+  uids.forEach((uid, i) => { groupDefs['g'+((i%n)+1)].members[uid] = true; });
+  renderAssignUI();
+  document.getElementById('group-assign-area').style.display = 'block';
+};
+
+function renderAssignUI() {
+  const cols = document.getElementById('group-columns');
+  const unassigned = document.getElementById('unassigned-list');
+  cols.innerHTML = '';
+  unassigned.innerHTML = '';
+
+  // 班の列を作成
+  setTimeout(updateGroupScreens, 500);
+  Object.entries(groupDefs).forEach(([gid, g]) => {
+    const col = document.createElement('div');
+    col.style.cssText = 'flex:1;min-width:120px;background:var(--surface);border-radius:8px;padding:8px;border:1px solid var(--border);';
+    col.innerHTML = `<div style="font-size:12px;font-weight:600;margin-bottom:6px;color:var(--accent);">${g.name}</div>`;
+    col.dataset.gid = gid;
+
+    // 班メンバーを表示
+    Object.keys(g.members).forEach(uid => {
+      if (students[uid]) col.appendChild(makeStudentChip(uid, gid));
+    });
+
+    // ドロップ受け入れ
+    col.addEventListener('dragover', e => { e.preventDefault(); col.style.background='var(--surface2)'; });
+    col.addEventListener('dragleave', () => { col.style.background='var(--surface)'; });
+    col.addEventListener('drop', e => {
+      e.preventDefault();
+      col.style.background = 'var(--surface)';
+      const uid = e.dataTransfer.getData('uid');
+      const fromGid = e.dataTransfer.getData('gid');
+      if (fromGid && groupDefs[fromGid]) delete groupDefs[fromGid].members[uid];
+      groupDefs[gid].members[uid] = true;
+      renderAssignUI();
+    });
+    cols.appendChild(col);
+  });
+
+  // 未割り当て生徒
+  const assignedUids = new Set(Object.values(groupDefs).flatMap(g => Object.keys(g.members)));
+  Object.keys(students).forEach(uid => {
+    if (!assignedUids.has(uid)) unassigned.appendChild(makeStudentChip(uid, null));
+  });
+
+  // 未割り当てエリアもドロップ対応
+  unassigned.addEventListener('dragover', e => e.preventDefault());
+  unassigned.addEventListener('drop', e => {
+    e.preventDefault();
+    const uid = e.dataTransfer.getData('uid');
+    const fromGid = e.dataTransfer.getData('gid');
+    if (fromGid && groupDefs[fromGid]) delete groupDefs[fromGid].members[uid];
+    renderAssignUI();
+  });
+}
+
+function makeStudentChip(uid, gid) {
+  const s = students[uid];
+  const chip = document.createElement('div');
+  chip.draggable = true;
+  chip.style.cssText = 'display:inline-flex;align-items:center;gap:4px;background:var(--surface2);border-radius:6px;padding:4px 8px;font-size:12px;cursor:grab;margin:2px;border:1px solid var(--border);';
+  chip.innerHTML = `<img src="${s.photoURL||''}" style="width:18px;height:18px;border-radius:50%;object-fit:cover;" onerror="this.style.display='none'"> ${s.name||s.email||uid}`;
+  chip.dataset.uid = uid;
+  chip.addEventListener('dragstart', e => {
+    e.dataTransfer.setData('uid', uid);
+    e.dataTransfer.setData('gid', gid || '');
+  });
+  return chip;
+}
+
+// 班をFirebaseに保存
+window.saveGroups = async function() {
+  const { ref, set } = window.FB;
+  // 全班データを保存
+  for (const [gid, g] of Object.entries(groupDefs)) {
+    await set(ref(db, `sessions/${sessionId}/groups/${gid}`), {
+      name: g.name,
+      members: g.members,
+      createdAt: Date.now()
+    });
+  }
+  document.getElementById('group-assign-area').style.display = 'none';
+  document.getElementById('group-content-area').style.display = 'block';
+  renderGroupContentArea();
+  toast('✅ 班を保存しました');
+};
+
+// 班を解散
+window.clearGroups = async function() {
+  if (!confirm('班を解散します。よろしいですか？')) return;
+  const { ref, set } = window.FB;
+  await set(ref(db, `sessions/${sessionId}/groups`), null);
+  groupDefs = {};
+  document.getElementById('group-assign-area').style.display = 'none';
+  document.getElementById('group-content-area').style.display = 'none';
+  toast('班を解散しました');
+};
+
+// ===== 班別モニタリングUI =====
+let _groupCols = 2; // デフォルト2列
+
+window.setGroupCols = function(n) {
+  _groupCols = n;
+  const grid = document.getElementById('group-monitor-grid');
+  if (grid) grid.style.gridTemplateColumns = `repeat(${n},minmax(0,1fr))`;
+  // ボタン状態更新
+  [2,3,4].forEach(i => {
+    const btn = document.getElementById('gcol-' + i);
+    if (!btn) return;
+    if (i === n) {
+      btn.style.background = 'var(--accent)'; btn.style.color = '#fff';
+      btn.style.borderColor = 'var(--accent)';
+    } else {
+      btn.style.background = 'var(--surface)'; btn.style.color = 'var(--text)';
+      btn.style.borderColor = 'var(--border)';
+    }
+  });
+};
+
+// 班コンテンツエリアを描画
+function renderGroupContentArea() {
+  const grid = document.getElementById('group-monitor-grid');
+  const bulkPanel = document.getElementById('group-bulk-panel');
+  if (!groupDefs || Object.keys(groupDefs).length === 0) {
+    if (grid) grid.innerHTML = '<p style="color:var(--muted);font-size:13px;">班が設定されていません</p>';
+    if (bulkPanel) bulkPanel.style.display = 'none';
+    return;
+  }
+  // 既存のプレビューリスナーをすべて解除してからカードを再描画
+  Object.keys(groupListeners).forEach(key => {
+    if (key.endsWith('_prev') && typeof groupListeners[key] === 'function') {
+      groupListeners[key]();
+      delete groupListeners[key];
+    }
+  });
+  if (bulkPanel) bulkPanel.style.display = 'block';
+  grid.style.gridTemplateColumns = `repeat(${_groupCols},minmax(0,1fr))`;
+  grid.innerHTML = '';
+
+  Object.entries(groupDefs).forEach(([gid, g]) => {
+    const members = Object.keys(g.members || {});
+    const card = document.createElement('div');
+    card.id = 'gcard-' + gid;
+    card.style.cssText = 'background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;';
+
+    // --- ヘッダー（班名 + メンバー） ---
+    const header = document.createElement('div');
+    header.style.cssText = 'background:var(--surface2);padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;';
+    const titleWrap = document.createElement('div');
+    titleWrap.style.cssText = 'display:flex;align-items:center;gap:10px;flex-wrap:wrap;';
+    const gname = document.createElement('span');
+    gname.style.cssText = 'font-weight:700;font-size:14px;color:var(--text);';
+    gname.textContent = g.name;
+    titleWrap.appendChild(gname);
+    members.forEach(uid => {
+      const chip = document.createElement('span');
+      chip.style.cssText = 'font-size:11px;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:1px 8px;';
+      chip.textContent = students[uid]?.name || uid.slice(0,6);
+      titleWrap.appendChild(chip);
+    });
+    header.appendChild(titleWrap);
+    // WB/画像ステータスバッジ
+    const statusBadge = document.createElement('span');
+    statusBadge.id = 'gstatus-' + gid;
+    statusBadge.style.cssText = 'font-size:10px;padding:2px 8px;border-radius:99px;background:var(--surface);border:1px solid var(--border);color:var(--muted);';
+    statusBadge.textContent = '未配布';
+    header.appendChild(statusBadge);
+    card.appendChild(header);
+
+    // --- プレビューエリア（WB/画像ミニチュア） ---
+    const preview = document.createElement('div');
+    preview.id = 'gprev-' + gid;
+    preview.style.cssText = 'flex:1;min-height:120px;background:#fff;position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer;border-bottom:1px solid var(--border);overflow:hidden;';
+    // 未配布プレースホルダー
+    preview.innerHTML = `<div id="gprev-placeholder-${gid}" style="display:flex;flex-direction:column;align-items:center;gap:6px;opacity:0.35;">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M3 9h18"/></svg>
+      <span style="font-size:11px;color:var(--muted);">未配布</span>
+    </div>
+    <canvas id="gprev-canvas-${gid}" style="display:none;width:100%;height:100%;object-fit:contain;"></canvas>
+    <img id="gprev-img-${gid}" style="display:none;width:100%;height:100%;object-fit:contain;" />`;
+    preview.onclick = () => openGroupZoom(gid);
+    card.appendChild(preview);
+
+    // --- 操作ボタン ---
+    const actions = document.createElement('div');
+    actions.style.cssText = 'display:grid;grid-template-columns:repeat(5,1fr);gap:0;border-top:1px solid var(--border);';
+    const btns = [
+      { label:'WB配布', icon:'<path d="M3 3h18v18H3z" stroke-linejoin="round"/><path d="M8 12h8M12 8v8"/>', color:'#2563eb', action:`openGroupWb('${gid}')`, id:`gbtn-wb-open-${gid}` },
+      { label:'WB回収', icon:'<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/>', color:'#ef4444', action:`closeGroupWb('${gid}')`, id:`gbtn-wb-close-${gid}` },
+      { label:'画像配布', icon:'<rect x="3" y="3" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 17l-5-5-4 4-2-2-4 4"/>', color:'#2563eb', action:`sendGroupImg('${gid}')`, id:`gbtn-img-open-${gid}` },
+      { label:'画像回収', icon:'<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/>', color:'#ef4444', action:`collectGroupImg('${gid}')`, id:`gbtn-img-close-${gid}` },
+      { label:'メッセージ', icon:'<path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>', color:'#7c3aed', action:`sendGroupMsg('${gid}')`, id:'' },
+    ];
+    btns.forEach((b, i) => {
+      const btn = document.createElement('button');
+      if (b.id) btn.id = b.id;
+      btn.style.cssText = `display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:8px 2px;font-size:10px;background:var(--surface);border:none;border-right:${i<4?'1px solid var(--border)':'none'};cursor:pointer;color:var(--muted);transition:.1s;`;
+      btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${b.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${b.icon}</svg>${b.label}`;
+      btn.onmouseenter = () => btn.style.background = 'var(--surface2)';
+      btn.onmouseleave = () => btn.style.background = 'var(--surface)';
+      btn.onclick = () => eval(b.action);
+      actions.appendChild(btn);
+    });
+    card.appendChild(actions);
+    grid.appendChild(card);
+
+    // WBとdistImgを監視してプレビューを更新
+    listenGroupPreview(gid);
+  });
+}
+
+// ===== 班プレビューのリアルタイム監視 =====
+// ストロークの座標は生徒canvasのピクセル値 → srcW/srcH でスケール変換
+const STUDENT_WB_W = 1200; // 生徒canvas幅の代表値（実測に近い値）
+const STUDENT_WB_H = 700;  // 生徒canvas高の代表値
+
+function listenGroupPreview(gid) {
+  if (groupListeners[gid + '_prev']) {
+    groupListeners[gid + '_prev']();
+    delete groupListeners[gid + '_prev'];
+  }
+  const { ref, onValue } = window.FB;
+
+  let wbSnapshot  = null;
+  let distImgData = null;
+
+  function redraw() {
+    const badge       = document.getElementById('gstatus-' + gid);
+    const placeholder = document.getElementById('gprev-placeholder-' + gid);
+    const canvas      = document.getElementById('gprev-canvas-' + gid);
+    const imgEl       = document.getElementById('gprev-img-' + gid);
+    if (!canvas) return;
+
+    const wbActive = wbSnapshot?.active === true;
+    const hasImg   = distImgData !== null;
+
+    if (wbActive || hasImg) {
+      if (imgEl) imgEl.style.display = 'none';
+      if (placeholder) placeholder.style.display = 'none';
+      canvas.style.display = 'block';
+      if (badge) {
+        if (wbActive) { badge.textContent = 'WB配布中'; badge.style.background='#dbeafe'; badge.style.color='#1d4ed8'; badge.style.borderColor='#93c5fd'; }
+        else          { badge.textContent = '画像配布中'; badge.style.background='#dcfce7'; badge.style.color='#15803d'; badge.style.borderColor='#86efac'; }
+      }
+      requestAnimationFrame(() => {
+        const parent = canvas.parentElement;
+        const W = Math.round(parent?.offsetWidth  || 280);
+        const H = Math.round(parent?.offsetHeight || 158);
+        if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; }
+        const bgUrl = hasImg ? distImgData.dataUrl : null;
+        // WB配布中はwbのstrokes/texts、画像配布中はdistImgのstrokes/textsを使う
+        const strokes = wbActive ? (wbSnapshot?.strokes || null) : (hasImg ? (distImgData?.strokes || null) : null);
+        const texts   = wbActive ? (wbSnapshot?.texts   || null) : (hasImg ? (distImgData?.texts   || null) : null);
+        replayWithBg(canvas, strokes, bgUrl, texts);
+      });
+    } else {
+      canvas.style.display = 'none';
+      if (imgEl) imgEl.style.display = 'none';
+      if (badge) { badge.textContent = '未配布'; badge.style.background='var(--surface)'; badge.style.color='var(--muted)'; badge.style.borderColor='var(--border)'; }
+      if (placeholder) placeholder.style.display = 'flex';
+    }
+  }
+
+  const unsubWb = onValue(ref(db, `sessions/${sessionId}/groups/${gid}/wb`), snap => {
+    wbSnapshot = snap.exists() ? snap.val() : null;
+    redraw();
+  });
+
+  const unsubImg = onValue(ref(db, `sessions/${sessionId}/groups/${gid}/distImg`), snap => {
+    distImgData = (snap.exists() && snap.val()?.active === true) ? snap.val() : null;
+    redraw();
+  });
+  // distImg/strokes と distImg/texts も監視してリアルタイム更新
+  const unsubImgStrokes = onValue(ref(db, `sessions/${sessionId}/groups/${gid}/distImg/strokes`), () => redraw());
+  const unsubImgTexts   = onValue(ref(db, `sessions/${sessionId}/groups/${gid}/distImg/texts`),   () => redraw());
+
+  groupListeners[gid + '_prev'] = () => { unsubWb(); unsubImg(); unsubImgStrokes(); unsubImgTexts(); };
+}
+
+// 背景画像＋ストローク＋テキストを正しい順序でcanvasに描画
+function replayWithBg(canvas, strokesObj, bgDataUrl, textsObj) {
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  const drawRest = () => {
+    if (strokesObj) Object.values(strokesObj).sort((a,b) => a.ts-b.ts).forEach(s => drawStrokeOnCanvas(canvas, s));
+    if (textsObj) drawTextsOnCanvas(ctx, canvas, textsObj);
+  };
+  if (bgDataUrl) {
+    const img = new Image();
+    img.onload = () => { ctx.drawImage(img, 0, 0, canvas.width, canvas.height); drawRest(); };
+    img.onerror = () => drawRest();
+    img.src = bgDataUrl;
+  } else {
+    drawRest();
+  }
+}
+
+// テキストデータをcanvasに描画（透明背景）
+function drawTextsOnCanvas(ctx, canvas, textsObj) {
+  if (!textsObj) return;
+  const pW = canvas.width, pH = canvas.height;
+  Object.values(textsObj).forEach(td => {
+    if (!td.text) return;
+    const x = (td.x / 100) * pW;
+    const y = (td.y / 100) * pH;
+    // fontSizePct（生徒canvasH基準の%）があればcanvasHに対して再計算、なければ旧形式をcanvasH比でスケール
+    let fs;
+    if (td.fontSizePct) {
+      fs = td.fontSizePct / 100 * pH;
+    } else if (td.canvasH) {
+      fs = (td.fontSize || 16) / td.canvasH * pH;
+    } else {
+      // 旧形式: 生徒canvasH≈500を仮定してスケール
+      fs = (td.fontSize || 16) / 500 * pH;
+    }
+    fs = Math.max(8, Math.round(fs));
+    const lineH = Math.round(fs * 1.25);
+    ctx.save();
+    ctx.font = `bold ${fs}px 'Noto Sans JP', sans-serif`;
+    ctx.fillStyle = td.color || '#1e293b';
+    td.text.split('\n').forEach((line, i) => ctx.fillText(line, x+8, y+fs+i*lineH));
+    ctx.restore();
+  });
+}
+
+// 後方互換ラッパー
+function drawStrokeOnPreview(canvas, stroke) { drawStrokeOnCanvas(canvas, stroke); }
+function initPreviewCanvas(canvas) {
+  const W = Math.round(canvas.parentElement?.offsetWidth || 280);
+  const H = Math.round(canvas.parentElement?.offsetHeight || 158);
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
+}
+
+// 班カードクリックで拡大モーダルを表示
+window.openGroupZoom = function(gid) {
+  const g = groupDefs[gid];
+  if (!g) return;
+  const members = Object.keys(g.members || {});
+
+  document.getElementById('group-zoom-gid').dataset.gid = gid;
+  document.getElementById('group-zoom-title').textContent = `${g.name}（${members.length}名）`;
+
+  const membersEl = document.getElementById('group-zoom-members');
+  membersEl.innerHTML = '';
+  members.forEach(uid => {
+    const chip = document.createElement('span');
+    chip.style.cssText = 'font-size:13px;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:99px;padding:3px 12px;';
+    chip.textContent = students[uid]?.name || uid.slice(0,6);
+    membersEl.appendChild(chip);
+  });
+
+  const canvas     = document.getElementById('group-zoom-canvas');
+  const imgEl      = document.getElementById('group-zoom-img');
+  const nopreview  = document.getElementById('group-zoom-nopreview');
+  canvas.style.display  = 'none';
+  imgEl.style.display   = 'none';
+  nopreview.style.display = 'block';
+
+  if (window._zoomUnsubs) window._zoomUnsubs.forEach(f => f());
+  window._zoomUnsubs = [];
+  const { ref: fbRef, onValue: fbOnValue } = window.FB;
+
+  let _zoomWbSnap  = null;
+  let _zoomImgData = null;
+
+  function zoomRedraw() {
+    const wbActive = _zoomWbSnap?.active === true;
+    const hasImg   = _zoomImgData !== null;
+    if (!wbActive && !hasImg) {
+      canvas.style.display = 'none'; imgEl.style.display = 'none'; nopreview.style.display = 'block';
+      return;
+    }
+    nopreview.style.display = 'none'; imgEl.style.display = 'none'; canvas.style.display = 'block';
+    requestAnimationFrame(() => {
+      const container = document.getElementById('group-zoom-preview');
+      const W = container.offsetWidth || 820;
+      const H = Math.round(W * 9/16);
+      if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; }
+      const bgUrl = hasImg ? _zoomImgData.dataUrl : null;
+      const strokes = wbActive ? (_zoomWbSnap?.strokes || null) : (hasImg ? (_zoomImgData?.strokes || null) : null);
+      const texts   = wbActive ? (_zoomWbSnap?.texts   || null) : (hasImg ? (_zoomImgData?.texts   || null) : null);
+      replayWithBg(canvas, strokes, bgUrl, texts);
+    });
+  }
+
+  window._zoomUnsubs.push(fbOnValue(fbRef(db, `sessions/${sessionId}/groups/${gid}/wb`), wbSnap => {
+    _zoomWbSnap = wbSnap.exists() ? wbSnap.val() : null;
+    zoomRedraw();
+  }));
+  window._zoomUnsubs.push(fbOnValue(fbRef(db, `sessions/${sessionId}/groups/${gid}/distImg`), imgSnap => {
+    _zoomImgData = (imgSnap.exists() && imgSnap.val()?.active === true) ? imgSnap.val() : null;
+    zoomRedraw();
+  }));
+  // distImg内のstrokes/textsの変化も監視（画像配布中の書き込みをリアルタイム表示）
+  window._zoomUnsubs.push(fbOnValue(fbRef(db, `sessions/${sessionId}/groups/${gid}/distImg/strokes`), () => zoomRedraw()));
+  window._zoomUnsubs.push(fbOnValue(fbRef(db, `sessions/${sessionId}/groups/${gid}/distImg/texts`),   () => zoomRedraw()));
+
+  document.getElementById('group-zoom-modal').style.display = 'flex';
+};
+
+window.closeGroupZoom = function() {
+  document.getElementById('group-zoom-modal').style.display = 'none';
+  if (window._zoomUnsubs) { window._zoomUnsubs.forEach(f => f()); window._zoomUnsubs = []; }
+};
+
+// canvas に1ストロークを描画（スケール変換付き）
+function drawStrokeOnCanvas(canvas, stroke) {
+  if (!stroke?.points || stroke.points.length < 2) return;
+  const W = canvas.width; const H = canvas.height;
+  const ctx = canvas.getContext('2d');
+  ctx.beginPath();
+  ctx.strokeStyle = stroke.tool === 'eraser' ? '#fff' : (stroke.color || '#222');
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  const pts = stroke.points;
+  if (stroke.normalized) {
+    // パーセント正規化座標（0〜100）→ canvasピクセルに変換
+    // 線幅は生徒canvas基準のpx値を、表示canvasサイズに合わせてスケール
+    // 幾何平均スケール（√(scaleX*scaleY)）が視覚的に最も自然
+    const srcW = stroke.canvasW || 800;
+    const srcH = stroke.canvasH || 500;
+    const scaleX = W / srcW;
+    const scaleY = H / srcH;
+    const sizeScale = Math.sqrt(scaleX * scaleY);
+    ctx.lineWidth = Math.max(0.5, (stroke.size || 3) * sizeScale);
+    ctx.moveTo(pts[0][0] / 100 * W, pts[0][1] / 100 * H);
+    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0] / 100 * W, pts[i][1] / 100 * H);
+  } else {
+    // 旧形式: 絶対ピクセル座標 → STUDENT_WB_W/H でスケール変換
+    const scaleX = W / STUDENT_WB_W;
+    const scaleY = H / STUDENT_WB_H;
+    ctx.lineWidth = Math.max(1, (stroke.size || 3) * scaleX * (stroke.tool === 'eraser' ? 5 : 1));
+    ctx.moveTo(pts[0][0] * scaleX, pts[0][1] * scaleY);
+    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0] * scaleX, pts[i][1] * scaleY);
+  }
+  ctx.stroke();
+}
+
+// 班のWBを開く
+window.openGroupWb = async function(gid) {
+  const { ref, set } = window.FB;
+  await set(ref(db, `sessions/${sessionId}/groups/${gid}/wb`), {
+    active: true, instruction: '', resetTs: Date.now()
+  });
+  toast(`✅ ${groupDefs[gid]?.name || gid} のWBを開きました`);
+};
+
+// 班のWBを閉じる（strokes/textsも削除）
+window.closeGroupWb = async function(gid) {
+  const { ref, set } = window.FB;
+  await set(ref(db, `sessions/${sessionId}/groups/${gid}/wb/active`), false);
+  await set(ref(db, `sessions/${sessionId}/groups/${gid}/wb/texts`), null);
+  toast(`${groupDefs[gid]?.name} のWBを回収しました`);
+};
+
+window.collectGroupImg = async function(gid) {
+  const { ref, set } = window.FB;
+  await set(ref(db, `sessions/${sessionId}/groups/${gid}/distImg/active`), false);
+  await set(ref(db, `sessions/${sessionId}/groups/${gid}/distImg/strokes`), null);
+  await set(ref(db, `sessions/${sessionId}/groups/${gid}/distImg/texts`),   null);
+  toast(`${groupDefs[gid]?.name} の画像を回収しました`);
+};
+
+// ⑨ 全班一括操作
+window.openAllGroupWb = async function() {
+  if (!groupDefs || Object.keys(groupDefs).length === 0) return;
+  const { ref, set } = window.FB;
+  for (const gid of Object.keys(groupDefs)) {
+    await set(ref(db, `sessions/${sessionId}/groups/${gid}/wb`), {
+      active: true, instruction: '', resetTs: Date.now()
+    });
+  }
+  toast('📋 全班にホワイトボードを配布しました');
+  // コメントモーダルを表示（任意入力）
+  openGroupCommentModal('all', 'WB配布');
+};
+window.closeAllGroupWb = async function() {
+  if (!groupDefs) return;
+  for (const gid of Object.keys(groupDefs)) await window.closeGroupWb(gid);
+  toast('全班のホワイトボードを回収しました');
+};
+window.sendAllGroupImg = async function() {
+  if (!groupDefs) return;
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = 'image/*';
+  input.onchange = async () => {
+    const file = input.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const dataUrl = e.target.result;
+      const { ref, set } = window.FB;
+      for (const gid of Object.keys(groupDefs)) {
+        await set(ref(db, `sessions/${sessionId}/groups/${gid}/distImg`), {dataUrl, active:true, ts:Date.now()});
+      }
+      toast('全班に画像を配布しました');
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+};
+window.collectAllGroupImg = async function() {
+  if (!groupDefs) return;
+  const { ref, set } = window.FB;
+  for (const gid of Object.keys(groupDefs)) {
+    await set(ref(db, `sessions/${sessionId}/groups/${gid}/distImg/active`), false);
+  }
+  toast('全班の画像を回収しました');
+};
+
+// ⑨ 班ごとに生徒の映像サムネイルを表示
+function updateGroupScreens() {
+  if (!groupDefs) return;
+  Object.entries(groupDefs).forEach(([gid, g]) => {
+    const container = document.getElementById(`group-screens-${gid}`);
+    if (!container) return;
+    const members = Object.keys(g.members || {});
+    container.innerHTML = '';
+    members.forEach(uid => {
+      const stu = students[uid];
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'text-align:center;';
+      const name = document.createElement('div');
+      name.style.cssText = 'font-size:10px;color:var(--muted);margin-top:2px;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+      name.textContent = stu?.name || uid.slice(0,6);
+      // 既存の映像要素があれば流用
+      const existingVideo = document.getElementById('v-' + uid);
+      if (existingVideo && existingVideo.srcObject) {
+        const clone = document.createElement('video');
+        clone.srcObject = existingVideo.srcObject;
+        clone.autoplay = true; clone.muted = true; clone.playsInline = true;
+        clone.style.cssText = 'width:80px;height:50px;object-fit:cover;border-radius:6px;border:1px solid var(--border);background:#000;';
+        wrap.appendChild(clone); wrap.appendChild(name);
+      } else {
+        const ph = document.createElement('div');
+        ph.style.cssText = 'width:80px;height:50px;border-radius:6px;border:1px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:18px;';
+        ph.textContent = stu?.status === 'sharing' ? '📺' : '⏳';
+        wrap.appendChild(ph); wrap.appendChild(name);
+      }
+      container.appendChild(wrap);
+    });
+  });
+}
+
+let _groupMsgGid = null;
+window.sendGroupMsg = function(gid) {
+  _groupMsgGid = gid;
+  const name = groupDefs[gid]?.name || gid;
+  document.getElementById('gmtarget').textContent = `送信先: ${name} の全員`;
+  document.getElementById('gminput').value = '';
+  const modal = document.getElementById('group-msg-modal');
+  modal.style.display = 'flex';
+  setTimeout(() => document.getElementById('gminput').focus(), 100);
+};
+window.closeGroupMsgModal = function() {
+  document.getElementById('group-msg-modal').style.display = 'none';
+  // メッセージモードに戻す
+  _groupMsgIsComment = false;
+  const title = document.getElementById('gm-modal-title');
+  if (title) title.textContent = '💬 メッセージを送る';
+  const qbtns = document.getElementById('gm-quick-btns');
+  if (qbtns) qbtns.style.display = '';
+  const note = document.getElementById('gm-optional-note');
+  if (note) note.style.display = 'none';
+  const sendBtn = document.getElementById('gm-send-btn');
+  if (sendBtn) sendBtn.textContent = '📨 送信';
+  const input = document.getElementById('gminput');
+  if (input) input.placeholder = 'メッセージを入力...';
+};
+window.setGQM = function(text) {
+  document.getElementById('gminput').value = text;
+  document.getElementById('gminput').focus();
+};
+let _groupMsgIsComment = false; // コメントモード（空欄送信OK）
+
+window.openGroupCommentModal = function(gid, context) {
+  _groupMsgGid = gid;
+  _groupMsgIsComment = true;
+  const name = gid === 'all' ? '全班' : (groupDefs[gid]?.name || gid);
+  document.getElementById('gm-modal-title').textContent = '💬 コメントを追加（任意）';
+  document.getElementById('gmtarget').textContent = `${context} — ${name}`;
+  document.getElementById('gminput').value = '';
+  document.getElementById('gminput').placeholder = 'コメントを入力（省略可）...';
+  document.getElementById('gm-quick-btns').style.display = 'none';
+  document.getElementById('gm-optional-note').style.display = 'block';
+  document.getElementById('gm-send-btn').textContent = '✅ 確定';
+  document.getElementById('group-msg-modal').style.display = 'flex';
+  setTimeout(() => document.getElementById('gminput').focus(), 100);
+};
+
+window.sendGroupMessage = function() {
+  const text = document.getElementById('gminput').value.trim();
+  if (!_groupMsgIsComment && !text) { toast('⚠️ メッセージを入力してください'); return; }
+  const { ref, set } = window.FB;
+  if (text) {
+    // テキストがある場合のみメッセージを送信
+    if (_groupMsgGid === 'all') {
+      for (const gid of Object.keys(groupDefs)) {
+        set(ref(db, `sessions/${sessionId}/groups/${gid}/message`), { text, ts: Date.now() });
+      }
+      if (!_groupMsgIsComment) toast('💬 全班にメッセージを送りました');
+    } else {
+      set(ref(db, `sessions/${sessionId}/groups/${_groupMsgGid}/message`), { text, ts: Date.now() });
+      if (!_groupMsgIsComment) toast(`💬 ${groupDefs[_groupMsgGid]?.name || _groupMsgGid} にメッセージを送りました`);
+    }
+  }
+  window.closeGroupMsgModal();
+};
+
+// 班への画像配布
+window.sendGroupImg = async function(gid) {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = async () => {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const { ref, set } = window.FB;
+      await set(ref(db, `sessions/${sessionId}/groups/${gid}/wb/strokes`), null);
+      await set(ref(db, `sessions/${sessionId}/groups/${gid}/wb/texts`),   null);
+      await set(ref(db, `sessions/${sessionId}/groups/${gid}/distImg`), {
+        dataUrl: e.target.result,
+        active: true,
+        ts: Date.now()
+      });
+      toast(`✅ ${groupDefs[gid]?.name} に画像を配布しました`);
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+};
+
+// listenGroupWbSnapshots → listenGroupPreview に統合
+
+// セッション開始時にグループデータをFirebaseから読み込む
+function listenGroups() {
+  const { ref, onValue } = window.FB;
+  onValue(ref(db, `sessions/${sessionId}/groups`), snap => {
+    if (!snap.exists()) { groupDefs = {}; return; }
+    groupDefs = {};
+    snap.forEach(child => {
+      const g = child.val();
+      if (!g.members) g.members = {};  // nullの場合は空オブジェクトに
+      groupDefs[child.key] = g;
+    });
+    if (currentView === 'group') renderGroupPanel();
+  });
+}
+
+</script>
+</body>
+</html>
