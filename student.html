@@ -2256,6 +2256,46 @@
     window.addEventListener('focus', () => _report(false));
   })();
 
+  // =============================================
+  // ④ ウィンドウ最大化強制
+  // =============================================
+  (function initForceMaximize() {
+    function maximize() {
+      try {
+        window.resizeTo(screen.availWidth, screen.availHeight);
+        window.moveTo(0, 0);
+      } catch(e) {}
+    }
+
+    // 起動時に最大化
+    maximize();
+
+    // ウィンドウサイズが変わったら即座に最大化に戻す
+    let _resizeTimer = null;
+    window.addEventListener('resize', () => {
+      // 連続発火を防ぐため少し待ってから実行
+      clearTimeout(_resizeTimer);
+      _resizeTimer = setTimeout(() => {
+        const isMaximized =
+          window.outerWidth  >= screen.availWidth  * 0.98 &&
+          window.outerHeight >= screen.availHeight * 0.98;
+        if (!isMaximized) maximize();
+      }, 150);
+    });
+
+    // 最小化から復帰したとき（visibilitychange）に最大化
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        setTimeout(maximize, 200);
+      }
+    });
+
+    // フォーカスが戻ったときにも最大化
+    window.addEventListener('focus', () => {
+      setTimeout(maximize, 200);
+    });
+  })();
+
 </script>
 </body>
 </html>
