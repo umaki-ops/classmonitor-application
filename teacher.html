@@ -18,7 +18,6 @@
   .status-bar{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;white-space:nowrap;}
   .dot{width:7px;height:7px;border-radius:50%;background:var(--muted);}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
-  @keyframes awayPulse{0%,100%{opacity:1}50%{opacity:0.5}}
   .btn{padding:5px 11px;border-radius:7px;border:none;cursor:pointer;font-family:'Noto Sans JP',sans-serif;font-size:11px;font-weight:600;transition:all 0.2s;display:inline-flex;align-items:center;gap:3px;white-space:nowrap;}
   .btn-primary{background:var(--accent);color:white;}.btn-primary:hover{background:#2563eb;}
   .btn-outline{background:transparent;color:var(--muted);border:1px solid var(--border);}.btn-outline:hover{border-color:var(--accent);color:var(--accent);}
@@ -104,6 +103,39 @@
   .icon-btn{height:21px;padding:0 6px;border-radius:5px;background:var(--surface2);border:1px solid var(--border);color:var(--muted);cursor:pointer;display:flex;align-items:center;gap:2px;font-size:10px;font-family:'Noto Sans JP',sans-serif;font-weight:600;transition:all 0.2s;white-space:nowrap;}
   .icon-btn:hover{border-color:var(--accent);color:var(--accent);}
   .icon-btn.af{border-color:var(--purple);color:#a78bfa;background:rgba(124,58,237,0.1);}
+
+
+  /* タブ離脱中の点滅 */
+  @keyframes cardBlink {
+    0%, 100% { border-color: #ef4444; box-shadow: 0 0 0 2px rgba(239,68,68,0.4); }
+    50%       { border-color: transparent; box-shadow: none; }
+  }
+  .student-card.tab-away {
+    border-color: #ef4444 !important;
+    animation: cardBlink 1s infinite;
+  }
+  /* タブ離脱カウント */
+  .leave-badge { 
+    display:inline-flex; align-items:center; gap:3px;
+    background:rgba(239,68,68,0.15); color:#ef4444;
+    border:1px solid rgba(239,68,68,0.3);
+    border-radius:20px; padding:1px 6px;
+    font-size:9px; font-weight:700;
+    font-family:'JetBrains Mono',monospace;
+  }
+  .leave-badge.zero { 
+    background:rgba(16,185,129,0.1); color:#10b981;
+    border-color:rgba(16,185,129,0.2);
+  }
+  .leave-badge.warn {
+    background:rgba(245,158,11,0.15); color:#f59e0b;
+    border-color:rgba(245,158,11,0.3);
+  }
+  .leave-badge.danger {
+    background:rgba(239,68,68,0.2); color:#ef4444;
+    border-color:rgba(239,68,68,0.4);
+    animation: pulse 1.5s infinite;
+  }
   #empty-state{grid-column:1/-1;text-align:center;padding:50px 20px;color:var(--muted);}
   #empty-state .ei{font-size:34px;margin-bottom:10px;opacity:0.3;}
 
@@ -934,7 +966,7 @@ window.wbLbNav=function(dir){
 
 // ===== LISTEN =====
 function listenStudents(){
-  const{ref,onChildAdded,onChildChanged,onChildRemoved,onValue}=window.FB;
+  const{ref,onChildAdded,onChildChanged,onChildRemoved}=window.FB;
   onChildAdded(ref(db,`sessions/${sessionId}/students`),snap=>{
     const sid=snap.key,d=snap.val();
     if(!students[sid]){
@@ -942,14 +974,16 @@ function listenStudents(){
       addCard(sid,d);
       // 参加時点でsharingなら即接続、waitingなら共有開始を待つ
       if(d.status==='sharing') setupPC(sid);
-      // ③ 離脱検知の監視開始
-      listenAwayStatus(sid, db, sessionId);
     }
   });
   onChildChanged(ref(db,`sessions/${sessionId}/students`),snap=>{
     const sid=snap.key,d=snap.val();
     if(students[sid])students[sid]={...students[sid],...d};
     if(d.shareType)updateShareType(sid,d.shareType);
+    // タブ離脱カウントを更新
+    if(d.hasOwnProperty('tabLeaveCount')) updateLeaveCount(sid, d.tabLeaveCount);
+    // タブ離脱中フラグ
+    if(d.hasOwnProperty('tabAway')) updateTabAway(sid, d.tabAway);
     // status が含まれていない変化（shareType だけ等）は無視
     if(!d.hasOwnProperty('status'))return;
     if(d.status==='waiting'){
@@ -1315,40 +1349,6 @@ window.sendMsgToAll = () => sendMsg('all');
 window.sendMsgToStudent = (sid) => sendMsg(sid);
 
 // ===== Cards =====
-// ③ 離脱検知リスナー
-function listenAwayStatus(sid, db, sessionId) {
-  const { ref, onValue } = window.FB;
-  onValue(ref(db, `sessions/${sessionId}/students/${sid}/away`), snap => {
-    if (!snap.exists()) return;
-    const d = snap.val();
-    const card = document.getElementById('card-' + sid);
-    if (!card) return;
-
-    let badge = card.querySelector('.away-badge');
-    if (!badge) {
-      badge = document.createElement('span');
-      badge.className = 'away-badge';
-      const header = card.querySelector('.card-header');
-      if (header) header.appendChild(badge);
-    }
-
-    if (d.isAway) {
-      badge.textContent = `離脱中 ${d.count}回目`;
-      badge.style.cssText = 'background:#ef4444;color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;animation:awayPulse 1s infinite;';
-      card.style.boxShadow = '0 0 0 2px #ef4444';
-      card.style.borderColor = '#ef4444';
-    } else {
-      badge.textContent = `離脱${d.count}回`;
-      badge.style.cssText = d.count > 0
-        ? 'background:#f59e0b;color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;'
-        : '';
-      card.style.boxShadow = '';
-      card.style.borderColor = '';
-      if (d.count === 0) badge.remove();
-    }
-  });
-}
-
 function addCard(sid,data){
   document.getElementById('empty-state').style.display='none';
   const name=data.name||`生徒${Object.keys(students).length}`;
@@ -1364,6 +1364,7 @@ function addCard(sid,data){
     <div id="content-${sid}"></div>
     <div class="card-footer">
       <span class="jtime">${now}</span>
+      <span class="leave-badge zero" id="leave-${sid}" title="タブ離脱回数">👁 0</span>
       <div class="card-actions" id="actions-${sid}"></div>
     </div>`;
   const grid = document.getElementById('grid');
@@ -1447,6 +1448,28 @@ function updateShareType(sid,t){const el=document.getElementById('st-'+sid);if(!
 function setBadge(sid,status){const b=document.getElementById('badge-'+sid);if(!b)return;const map={live:['badge-live','LIVE'],waiting:['badge-waiting','待機中'],focused:['badge-focused','🎯 集中中']};b.className='badge '+(map[status]?.[0]||'badge-waiting');b.textContent=map[status]?.[1]||'待機中';}
 function updateStats(){const total=Object.keys(students).length;let s=0,f=0;document.querySelectorAll('.badge-live').forEach(()=>s++);document.querySelectorAll('.badge-focused').forEach(()=>f++);document.getElementById('stat-c').textContent=total;document.getElementById('stat-s').textContent=s;document.getElementById('stat-f').textContent=f;}
 
+
+
+function updateTabAway(sid, isAway) {
+  const card = document.getElementById('card-' + sid);
+  if (!card) return;
+  if (isAway) {
+    card.classList.add('tab-away');
+  } else {
+    card.classList.remove('tab-away');
+  }
+}
+function updateLeaveCount(sid, count) {
+  const el = document.getElementById('leave-' + sid);
+  if (!el) return;
+  const c = count || 0;
+  el.textContent = '👁 ' + c;
+  el.className = 'leave-badge';
+  if (c === 0) el.classList.add('zero');
+  else if (c <= 2) el.classList.add('warn');
+  else el.classList.add('danger');
+  el.title = 'タブ離脱回数: ' + c + '回';
+}
 window.openFullscreen=function(sid){
   const v=document.getElementById('v-'+sid);if(!v||!v.srcObject){toast('まだ画面共有されていません');return;}
   window.currentFsId=sid;document.getElementById('fs-video').srcObject=v.srcObject;document.getElementById('fs-name').textContent=students[sid]?.name||'生徒';document.getElementById('fs-id').textContent=students[sid]?.email||'';document.getElementById('fs-overlay').classList.add('show');

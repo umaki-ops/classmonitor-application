@@ -4,14 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>授業モニター｜生徒用</title>
-<!-- ===== PWA ===== -->
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="授業モニター">
-<meta name="theme-color" content="#2563eb">
-<link rel="manifest" href="manifest.json">
-<!-- インラインSW登録（manifest.jsonが別ファイルの場合のフォールバック用） -->
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;600;700;900&family=JetBrains+Mono:wght@500&display=swap');
   :root {
@@ -684,8 +676,6 @@
           status: 'waiting'
         });
         showState('connected');
-        // ③ 離脱検知を有効化
-        if (window._awayInit) window._awayInit(db, ref, set, sessionId, studentId);
       }, {onlyOnce:true});
 
       // セッション終了監視
@@ -820,6 +810,42 @@
         if (active === false) hideTeacher();
       });
       listenMyGroup();
+
+      // ===== タブ離脱カウント =====
+      let _tabLeaveCount = 0;
+      let _tabHidden = false;
+
+      // visibilitychange: タブが非表示になったらカウント＋tabAwayフラグ
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+          if (!_tabHidden) {
+            _tabHidden = true;
+            _tabLeaveCount++;
+            set(ref(db, `sessions/${sessionId}/students/${studentId}/tabLeaveCount`), _tabLeaveCount);
+            set(ref(db, `sessions/${sessionId}/students/${studentId}/lastLeaveAt`), Date.now());
+            set(ref(db, `sessions/${sessionId}/students/${studentId}/tabAway`), true);
+          }
+        } else {
+          _tabHidden = false;
+          set(ref(db, `sessions/${sessionId}/students/${studentId}/tabAway`), false);
+        }
+      });
+
+      // windowがフォーカスを失った場合もカウント（別ウィンドウ対応）
+      window.addEventListener('blur', () => {
+        if (!_tabHidden) {
+          _tabHidden = true;
+          _tabLeaveCount++;
+          set(ref(db, `sessions/${sessionId}/students/${studentId}/tabLeaveCount`), _tabLeaveCount);
+          set(ref(db, `sessions/${sessionId}/students/${studentId}/lastLeaveAt`), Date.now());
+          set(ref(db, `sessions/${sessionId}/students/${studentId}/tabAway`), true);
+        }
+      });
+
+      window.addEventListener('focus', () => {
+        _tabHidden = false;
+        set(ref(db, `sessions/${sessionId}/students/${studentId}/tabAway`), false);
+      });
 
       // main()内のローカル関数をHTMLのonclickから呼べるよう window に公開
       window.hideTeacher  = window.hideTeacher || hideTeacher;
@@ -2195,106 +2221,6 @@
 
   } // end main
   main();
-
-  // =============================================
-  // ② PWA: Service Worker 登録
-  // =============================================
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js')
-      .then(reg => console.log('[SW] registered', reg.scope))
-      .catch(err => console.warn('[SW] registration failed', err));
-  }
-
-  // =============================================
-  // ③ 離脱検知・Firebaseへ通知
-  // =============================================
-  (function initAwayDetect() {
-    // main() で sessionId / studentId / db が確定するまで待つ
-    // → onAuthStateChanged 完了後に _awayReady フラグで有効化
-    let _awayEnabled = false;
-    let _awayCount   = 0;
-    let _awayStart   = null;
-    let _dbRef, _sessionId, _studentId;
-
-    // main() 内の onAuthStateChanged から呼ばれるよう window に公開
-    window._awayInit = function(db, ref, set, sessionId, studentId) {
-      _dbRef      = { db, ref, set };
-      _sessionId  = sessionId;
-      _studentId  = studentId;
-      _awayEnabled = true;
-      // ページ表示状態を初期書き込み
-      _report(document.hidden);
-    };
-
-    function _report(isAway) {
-      if (!_awayEnabled) return;
-      const { db, ref, set } = _dbRef;
-      const now = Date.now();
-      if (isAway) {
-        _awayStart = now;
-        _awayCount++;
-        set(ref(db, `sessions/${_sessionId}/students/${_studentId}/away`), {
-          isAway:   true,
-          since:    now,
-          count:    _awayCount
-        });
-      } else {
-        const duration = _awayStart ? now - _awayStart : 0;
-        _awayStart = null;
-        set(ref(db, `sessions/${_sessionId}/students/${_studentId}/away`), {
-          isAway:        false,
-          lastDuration:  duration,
-          count:         _awayCount
-        });
-      }
-    }
-
-    // visibilitychange: タブ切り替え・最小化
-    document.addEventListener('visibilitychange', () => _report(document.hidden));
-    // blur/focus: ウィンドウフォーカス移動
-    window.addEventListener('blur',  () => _report(true));
-    window.addEventListener('focus', () => _report(false));
-  })();
-
-  // =============================================
-  // ④ ウィンドウ最大化強制
-  // =============================================
-  (function initForceMaximize() {
-    function maximize() {
-      try {
-        window.resizeTo(screen.availWidth, screen.availHeight);
-        window.moveTo(0, 0);
-      } catch(e) {}
-    }
-
-    // 起動時に最大化
-    maximize();
-
-    // ウィンドウサイズが変わったら即座に最大化に戻す
-    let _resizeTimer = null;
-    window.addEventListener('resize', () => {
-      // 連続発火を防ぐため少し待ってから実行
-      clearTimeout(_resizeTimer);
-      _resizeTimer = setTimeout(() => {
-        const isMaximized =
-          window.outerWidth  >= screen.availWidth  * 0.98 &&
-          window.outerHeight >= screen.availHeight * 0.98;
-        if (!isMaximized) maximize();
-      }, 150);
-    });
-
-    // 最小化から復帰したとき（visibilitychange）に最大化
-    document.addEventListener('visibilitychange', () => {
-      if (!document.hidden) {
-        setTimeout(maximize, 200);
-      }
-    });
-
-    // フォーカスが戻ったときにも最大化
-    window.addEventListener('focus', () => {
-      setTimeout(maximize, 200);
-    });
-  })();
 
 </script>
 </body>
