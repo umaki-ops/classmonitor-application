@@ -46,6 +46,10 @@
   .url-display{flex:1;padding:6px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .copy-btn{padding:6px 11px;background:var(--accent);color:white;border:none;border-radius:7px;cursor:pointer;font-size:11px;font-weight:600;white-space:nowrap;transition:all 0.2s;}
   .copy-btn.copied{background:var(--green);}
+  .pwa-link-btn{display:flex;align-items:center;gap:6px;padding:10px 14px;background:linear-gradient(135deg,#0891b2,#0e7490);color:white;border-radius:9px;text-decoration:none;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;cursor:pointer;transition:all 0.2s;overflow:hidden;}
+  .pwa-link-btn:hover{opacity:0.85;transform:translateY(-1px);box-shadow:0 4px 12px rgba(8,145,178,0.4);}
+  .pwa-link-text{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .pwa-link-icon{font-size:14px;flex-shrink:0;}
 
   /* Control bar */
   #control-bar{display:none;align-items:center;justify-content:space-between;margin-bottom:11px;flex-wrap:wrap;gap:8px;}
@@ -303,9 +307,20 @@
 
   <!-- Share URL -->
   <div id="share-box">
-    <div class="share-title">📎 生徒用URL</div>
-    <div class="url-row"><div class="url-display" id="share-url"></div><button class="copy-btn" id="copy-btn" onclick="copyUrl()">コピー</button></div>
-    <div style="margin-top:6px;display:flex;gap:6px;align-items:center;"><span style="font-size:10px;color:var(--muted);">PWA直接起動:</span><a id="custom-scheme-link" href="#" style="font-size:10px;color:var(--accent2);font-family:JetBrains Mono,monospace;word-break:break-all;" onclick="openCustomUrl(event)">（セッション開始後に表示）</a></div>
+    <div class="share-title">📎 生徒用リンク（クリックでPWAが直接起動）</div>
+    <!-- クリックでPWA直接起動するリンクボタン -->
+    <a id="pwa-link" href="#" class="pwa-link-btn" onclick="openCustomUrl(event)" title="クリックするとPWAアプリが直接起動します">
+      <span class="pwa-link-icon">📲</span>
+      <span class="pwa-link-text" id="pwa-link-text">セッション開始後に表示されます</span>
+      <span class="pwa-link-icon">↗</span>
+    </a>
+    <div class="url-row" style="margin-top:8px;">
+      <div class="url-display" id="share-url" style="font-size:10px;color:var(--muted);"></div>
+      <button class="copy-btn" id="copy-btn" onclick="copyUrl()">📋 コピー</button>
+    </div>
+    <div style="margin-top:5px;font-size:10px;color:var(--muted);line-height:1.5;">
+      ↑ このリンクをGoogle Classroom等に貼るとPWAが直接起動します
+    </div>
   </div>
 
   <!-- Whiteboard controls (shown in wb view) -->
@@ -654,11 +669,14 @@ window.startSession=async function(){
   document.getElementById('share-box').style.display='block';
   document.getElementById('end-btn').style.display='';
   document.getElementById('hactions').style.display='flex';
-  document.getElementById('share-url').textContent=httpsUrl;
-  document.getElementById('share-url').dataset.customUrl=customUrl;
-  document.getElementById('share-url').dataset.httpsUrl=httpsUrl;
-  const csl=document.getElementById('custom-scheme-link');
-  if(csl){csl.href=customUrl;csl.textContent=customUrl;}
+  // PWAリンクボタンを更新
+  const pwaLink=document.getElementById('pwa-link');
+  if(pwaLink){ pwaLink.href=customUrl; pwaLink.dataset.customUrl=customUrl; }
+  const pwaLinkText=document.getElementById('pwa-link-text');
+  if(pwaLinkText) pwaLinkText.textContent=customUrl;
+  // 参考用httpsURL（コピー用）
+  const shareUrl=document.getElementById('share-url');
+  if(shareUrl){ shareUrl.textContent=httpsUrl; shareUrl.dataset.customUrl=customUrl; }
   const dot=document.getElementById('cdot');dot.style.background='var(--green)';dot.style.animation='pulse 2s infinite';
   document.getElementById('cstatus').textContent=sessionId;
   listenStudents();
@@ -1036,17 +1054,12 @@ async function setupPC(sid){
       else{const ms=new MediaStream();ms.addTrack(ev.track);v.srcObject=ms;}
       v.play().catch(()=>{});
       v.style.display='block';if(ph)ph.style.display='none';setBadge(sid,'live');updateStats();
-
-      // トラックがmute(他画面切替時)されても最後のフレームを表示し続ける
-      ev.track.addEventListener('mute', () => {
-        // video要素はmuteされても最後のフレームを保持するため何もしない
-        // ただしbadgeを「離脱中」に更新
-        const badge = document.getElementById('badge-'+sid);
-        if(badge){ badge.textContent='離脱中'; badge.className='badge badge-waiting'; }
+      ev.track.addEventListener('mute',()=>{
+        const badge=document.getElementById('badge-'+sid);
+        if(badge){badge.textContent='離脱中';badge.className='badge badge-waiting';}
       });
-      ev.track.addEventListener('unmute', () => {
-        v.play().catch(()=>{});
-        setBadge(sid,'live'); updateStats();
+      ev.track.addEventListener('unmute',()=>{
+        v.play().catch(()=>{});setBadge(sid,'live');updateStats();
       });
     }
   };
@@ -1195,13 +1208,11 @@ window.broadcastStudentScreen=function(sid){
   const srcPc=peerConnections[sid];
   // PCがない、またはliveなトラックがない場合: video要素のsrcObjectから試みる
   let stream=null;
-  // video要素のsrcObjectを優先（muteされたトラックも含め最新状態を取得）
   const v=document.getElementById('v-'+sid);
   if(v&&v.srcObject){
     const tracks=[...v.srcObject.getTracks()].filter(t=>t.readyState==='live'||t.muted);
     if(tracks.length>0) stream=new MediaStream(tracks);
   }
-  // フォールバック: RTCReceiverのトラックを使う
   if(!stream&&srcPc){
     const tracks=srcPc.getReceivers().map(r=>r.track).filter(t=>t&&(t.readyState==='live'||t.muted));
     if(tracks.length>0) stream=new MediaStream(tracks);
@@ -1229,7 +1240,6 @@ async function setupStudentBcastPc(sid,stream){
     const pc=new RTCPeerConnection(ICE);studentBcastPcs[sid]=pc;
     stream.getTracks().forEach(t=>{
       pc.addTrack(t,stream);
-      // 元トラックがmute→unmuteしたら自動で最新トラックに差し替え
       t.addEventListener('unmute',()=>{
         const sender=pc.getSenders().find(s=>s.track&&s.track.kind===t.kind);
         if(sender) sender.replaceTrack(t).catch(()=>{});
@@ -1500,14 +1510,20 @@ window.openFullscreen=function(sid){
 };
 window.closeFullscreen=function(){document.getElementById('fs-overlay').classList.remove('show');document.getElementById('fs-video').srcObject=null;window.currentFsId=null;};
 window.copyUrl=function(){
+  // カスタムスキームURLをコピー（生徒がクリックするとPWA直接起動）
   const el=document.getElementById('share-url');
   const url=el.dataset.customUrl||el.textContent;
-  navigator.clipboard.writeText(url).then(()=>{const b=document.getElementById('copy-btn');b.textContent='✓ コピー済';b.classList.add('copied');setTimeout(()=>{b.textContent='コピー';b.classList.remove('copied');},2000);});
+  navigator.clipboard.writeText(url).then(()=>{
+    const b=document.getElementById('copy-btn');
+    b.textContent='✓ コピー済';b.classList.add('copied');
+    setTimeout(()=>{b.textContent='📋 コピー';b.classList.remove('copied');},2000);
+  });
 };
 window.openCustomUrl=function(e){
   e.preventDefault();
-  const url=document.getElementById('share-url').dataset.customUrl;
-  if(url) window.open(url,'_blank');
+  const el=document.getElementById('pwa-link');
+  const url=el?.dataset?.customUrl||el?.href;
+  if(url&&url!=='#') window.open(url,'_blank');
 };
 window.updateGridSize=function(){document.getElementById('grid').style.gridTemplateColumns=`repeat(${document.getElementById('grid-size').value},1fr)`;};
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){window.closeFullscreen();closeWbFullscreen();closeMsgModal();closeSurvey();closeResults();if(window.closeGroupMsgModal)window.closeGroupMsgModal();if(window.closeGroupZoom)window.closeGroupZoom();}if(e.key==='ArrowLeft')wbLbNav(-1);if(e.key==='ArrowRight')wbLbNav(1);});
