@@ -305,6 +305,7 @@
   <div id="share-box">
     <div class="share-title">📎 生徒用URL</div>
     <div class="url-row"><div class="url-display" id="share-url"></div><button class="copy-btn" id="copy-btn" onclick="copyUrl()">コピー</button></div>
+    <div style="margin-top:6px;display:flex;gap:6px;align-items:center;"><span style="font-size:10px;color:var(--muted);">PWA直接起動:</span><a id="custom-scheme-link" href="#" style="font-size:10px;color:var(--accent2);font-family:JetBrains Mono,monospace;word-break:break-all;" onclick="openCustomUrl(event)">（セッション開始後に表示）</a></div>
   </div>
 
   <!-- Whiteboard controls (shown in wb view) -->
@@ -645,14 +646,19 @@ window.startSession=async function(){
   sessionId=gid();
   const{ref,set}=window.FB;
   await set(ref(db,`sessions/${sessionId}`),{className:document.getElementById('class-name').value||'クラス',createdAt:Date.now(),active:true});
-  const base='https://umaki-ops.github.io/classmonitor-application/student.html';
-  const url=`${base}?session=${sessionId}&db=${encodeURIComponent(du)}&apiKey=${encodeURIComponent(ak)}&projectId=${encodeURIComponent(pi)}`;
+  const _params=`session=${sessionId}&db=${encodeURIComponent(du)}&apiKey=${encodeURIComponent(ak)}&projectId=${encodeURIComponent(pi)}`;
+  const customUrl=`web+classmonitor://?${_params}`;
+  const httpsUrl=`https://umaki-ops.github.io/classmonitor-application/student.html?${_params}`;
   document.getElementById('setup-panel').style.display='none';
   document.getElementById('control-bar').style.display='flex';
   document.getElementById('share-box').style.display='block';
   document.getElementById('end-btn').style.display='';
   document.getElementById('hactions').style.display='flex';
-  document.getElementById('share-url').textContent=url;
+  document.getElementById('share-url').textContent=httpsUrl;
+  document.getElementById('share-url').dataset.customUrl=customUrl;
+  document.getElementById('share-url').dataset.httpsUrl=httpsUrl;
+  const csl=document.getElementById('custom-scheme-link');
+  if(csl){csl.href=customUrl;csl.textContent=customUrl;}
   const dot=document.getElementById('cdot');dot.style.background='var(--green)';dot.style.animation='pulse 2s infinite';
   document.getElementById('cstatus').textContent=sessionId;
   listenStudents();
@@ -1351,7 +1357,7 @@ window.sendMsgToStudent = (sid) => sendMsg(sid);
 // ===== Cards =====
 function addCard(sid,data){
   document.getElementById('empty-state').style.display='none';
-  const name=data.name||`生徒${Object.keys(students).length}`;
+  const name=data.name||data.email||'不明';
   const initial=name.charAt(0);
   const now=new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'});
   const card=document.createElement('div');card.className='student-card';card.id='card-'+sid;
@@ -1475,7 +1481,16 @@ window.openFullscreen=function(sid){
   window.currentFsId=sid;document.getElementById('fs-video').srcObject=v.srcObject;document.getElementById('fs-name').textContent=students[sid]?.name||'生徒';document.getElementById('fs-id').textContent=students[sid]?.email||'';document.getElementById('fs-overlay').classList.add('show');
 };
 window.closeFullscreen=function(){document.getElementById('fs-overlay').classList.remove('show');document.getElementById('fs-video').srcObject=null;window.currentFsId=null;};
-window.copyUrl=function(){navigator.clipboard.writeText(document.getElementById('share-url').textContent).then(()=>{const b=document.getElementById('copy-btn');b.textContent='✓ コピー済';b.classList.add('copied');setTimeout(()=>{b.textContent='コピー';b.classList.remove('copied');},2000);});};
+window.copyUrl=function(){
+  const el=document.getElementById('share-url');
+  const url=el.dataset.customUrl||el.textContent;
+  navigator.clipboard.writeText(url).then(()=>{const b=document.getElementById('copy-btn');b.textContent='✓ コピー済';b.classList.add('copied');setTimeout(()=>{b.textContent='コピー';b.classList.remove('copied');},2000);});
+};
+window.openCustomUrl=function(e){
+  e.preventDefault();
+  const url=document.getElementById('share-url').dataset.customUrl;
+  if(url) window.open(url,'_blank');
+};
 window.updateGridSize=function(){document.getElementById('grid').style.gridTemplateColumns=`repeat(${document.getElementById('grid-size').value},1fr)`;};
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){window.closeFullscreen();closeWbFullscreen();closeMsgModal();closeSurvey();closeResults();if(window.closeGroupMsgModal)window.closeGroupMsgModal();if(window.closeGroupZoom)window.closeGroupZoom();}if(e.key==='ArrowLeft')wbLbNav(-1);if(e.key==='ArrowRight')wbLbNav(1);});
 
