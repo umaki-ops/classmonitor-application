@@ -46,10 +46,6 @@
   .url-display{flex:1;padding:6px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .copy-btn{padding:6px 11px;background:var(--accent);color:white;border:none;border-radius:7px;cursor:pointer;font-size:11px;font-weight:600;white-space:nowrap;transition:all 0.2s;}
   .copy-btn.copied{background:var(--green);}
-  .pwa-link-btn{display:flex;align-items:center;gap:6px;padding:10px 14px;background:linear-gradient(135deg,#0891b2,#0e7490);color:white;border-radius:9px;text-decoration:none;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;cursor:pointer;transition:all 0.2s;overflow:hidden;}
-  .pwa-link-btn:hover{opacity:0.85;transform:translateY(-1px);box-shadow:0 4px 12px rgba(8,145,178,0.4);}
-  .pwa-link-text{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .pwa-link-icon{font-size:14px;flex-shrink:0;}
 
   /* Control bar */
   #control-bar{display:none;align-items:center;justify-content:space-between;margin-bottom:11px;flex-wrap:wrap;gap:8px;}
@@ -307,19 +303,14 @@
 
   <!-- Share URL -->
   <div id="share-box">
-    <div class="share-title">📎 生徒用リンク（クリックでPWAが直接起動）</div>
-    <!-- クリックでPWA直接起動するリンクボタン -->
-    <a id="pwa-link" href="#" class="pwa-link-btn" onclick="openCustomUrl(event)" title="クリックするとPWAアプリが直接起動します">
-      <span class="pwa-link-icon">📲</span>
-      <span class="pwa-link-text" id="pwa-link-text">セッション開始後に表示されます</span>
-      <span class="pwa-link-icon">↗</span>
-    </a>
-    <div class="url-row" style="margin-top:8px;">
-      <div class="url-display" id="share-url" style="font-size:10px;color:var(--muted);"></div>
-      <button class="copy-btn" id="copy-btn" onclick="copyUrl()">📋 コピー</button>
+    <div class="share-title">📎 生徒用リンク</div>
+    <div style="margin-bottom:6px;font-size:11px;color:var(--muted);line-height:1.6;">
+      下のURLをコピーしてGoogle Classroom等で生徒に送ってください。<br>
+      <span style="color:var(--green);font-weight:600;">生徒がクリックするとPWAアプリが直接起動します。</span>
     </div>
-    <div style="margin-top:5px;font-size:10px;color:var(--muted);line-height:1.5;">
-      ↑ このリンクをGoogle Classroom等に貼るとPWAが直接起動します
+    <div class="url-row">
+      <div class="url-display" id="share-url">セッション開始後に表示されます</div>
+      <button class="copy-btn" id="copy-btn" onclick="copyUrl()">📋 コピー</button>
     </div>
   </div>
 
@@ -669,14 +660,9 @@ window.startSession=async function(){
   document.getElementById('share-box').style.display='block';
   document.getElementById('end-btn').style.display='';
   document.getElementById('hactions').style.display='flex';
-  // PWAリンクボタンを更新
-  const pwaLink=document.getElementById('pwa-link');
-  if(pwaLink){ pwaLink.href=customUrl; pwaLink.dataset.customUrl=customUrl; }
-  const pwaLinkText=document.getElementById('pwa-link-text');
-  if(pwaLinkText) pwaLinkText.textContent=customUrl;
-  // 参考用httpsURL（コピー用）
+  // share-url にカスタムスキームURLを表示（生徒がクリックするとPWA起動）
   const shareUrl=document.getElementById('share-url');
-  if(shareUrl){ shareUrl.textContent=httpsUrl; shareUrl.dataset.customUrl=customUrl; }
+  if(shareUrl){ shareUrl.textContent=customUrl; shareUrl.dataset.customUrl=customUrl; }
   const dot=document.getElementById('cdot');dot.style.background='var(--green)';dot.style.animation='pulse 2s infinite';
   document.getElementById('cstatus').textContent=sessionId;
   listenStudents();
@@ -1510,7 +1496,6 @@ window.openFullscreen=function(sid){
 };
 window.closeFullscreen=function(){document.getElementById('fs-overlay').classList.remove('show');document.getElementById('fs-video').srcObject=null;window.currentFsId=null;};
 window.copyUrl=function(){
-  // カスタムスキームURLをコピー（生徒がクリックするとPWA直接起動）
   const el=document.getElementById('share-url');
   const url=el.dataset.customUrl||el.textContent;
   navigator.clipboard.writeText(url).then(()=>{
@@ -1518,12 +1503,6 @@ window.copyUrl=function(){
     b.textContent='✓ コピー済';b.classList.add('copied');
     setTimeout(()=>{b.textContent='📋 コピー';b.classList.remove('copied');},2000);
   });
-};
-window.openCustomUrl=function(e){
-  e.preventDefault();
-  const el=document.getElementById('pwa-link');
-  const url=el?.dataset?.customUrl||el?.href;
-  if(url&&url!=='#') window.open(url,'_blank');
 };
 window.updateGridSize=function(){document.getElementById('grid').style.gridTemplateColumns=`repeat(${document.getElementById('grid-size').value},1fr)`;};
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){window.closeFullscreen();closeWbFullscreen();closeMsgModal();closeSurvey();closeResults();if(window.closeGroupMsgModal)window.closeGroupMsgModal();if(window.closeGroupZoom)window.closeGroupZoom();}if(e.key==='ArrowLeft')wbLbNav(-1);if(e.key==='ArrowRight')wbLbNav(1);});
