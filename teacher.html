@@ -784,8 +784,7 @@ window.downloadReportCSV = function() {
   for (let i = 1; i <= maxLogs; i++) {
     csv += `,離脱${i}回目_時刻,離脱${i}回目_時間(秒)`;
   }
-  csv += '
-';
+  csv += '\n';
 
   _reportData.forEach(s => {
     let row = `"${s.name}","${s.email}",${s.leaveCount}`;
@@ -798,8 +797,7 @@ window.downloadReportCSV = function() {
         row += ',,';
       }
     }
-    csv += row + '
-';
+    csv += row + '\n';
   });
 
   const blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
