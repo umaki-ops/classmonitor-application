@@ -898,9 +898,13 @@
       // ===== タブ離脱カウント =====
       let _tabLeaveCount = 0;
       let _tabHidden = false;
+      // セッション参加完了後のみカウント開始（ログインポップアップのblurを除外）
+      let _tabMonitorReady = false;
+      setTimeout(() => { _tabMonitorReady = true; }, 2000); // 2秒後に監視開始
 
       // visibilitychange: タブが非表示になったらカウント＋tabAwayフラグ
       document.addEventListener('visibilitychange', () => {
+        if (!_tabMonitorReady) return;
         if (document.hidden) {
           if (!_tabHidden) {
             _tabHidden = true;
@@ -917,6 +921,7 @@
 
       // windowがフォーカスを失った場合もカウント（別ウィンドウ対応）
       window.addEventListener('blur', () => {
+        if (!_tabMonitorReady) return;
         if (!_tabHidden) {
           _tabHidden = true;
           _tabLeaveCount++;
@@ -927,6 +932,7 @@
       });
 
       window.addEventListener('focus', () => {
+        if (!_tabMonitorReady) return;
         _tabHidden = false;
         set(ref(db, `sessions/${sessionId}/students/${studentId}/tabAway`), false);
       });

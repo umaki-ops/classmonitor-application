@@ -979,9 +979,19 @@ function listenStudents(){
     const sid=snap.key,d=snap.val();
     if(!students[sid]){
       students[sid]={...d,id:sid};
-      addCard(sid,d);
-      // 参加時点でsharingなら即接続、waitingなら共有開始を待つ
-      if(d.status==='sharing') setupPC(sid);
+      // nameがない場合は最大2秒待って再取得してからカード作成
+      if(!d.name) {
+        setTimeout(() => {
+          const current = students[sid];
+          if(current && !document.getElementById('card-'+sid)) {
+            addCard(sid, current);
+            if(current.status==='sharing') setupPC(sid);
+          }
+        }, 2000);
+      } else {
+        addCard(sid,d);
+        if(d.status==='sharing') setupPC(sid);
+      }
     }
   });
   onChildChanged(ref(db,`sessions/${sessionId}/students`),snap=>{
