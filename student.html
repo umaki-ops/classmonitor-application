@@ -1098,6 +1098,8 @@
     // ===== 画面共有 =====
     window.startShare = async function() {
       window._shareActive = true;
+      // 画面共有ダイアログ表示中のblurをカウントしないよう一時停止
+      _tabMonitorReady = false;
       try {
         localStream = await navigator.mediaDevices.getDisplayMedia({
           video: {
@@ -1119,15 +1121,19 @@
           localStream.getTracks().forEach(t => t.stop());
           localStream = null;
           window._shareActive = false;
+          setTimeout(() => { _tabMonitorReady = true; }, 500); // 監視再開
           showState('connected');
           alert('「画面全体」を選択してください。\nタブやウィンドウは選択できません。');
           return;
         }
       } catch(e) {
         window._shareActive = false;
+        setTimeout(() => { _tabMonitorReady = true; }, 500); // 監視再開
         showState('connected');
         return;
       }
+      // 共有開始後に監視再開（ダイアログが閉じてフォーカスが戻るまで少し待つ）
+      setTimeout(() => { _tabMonitorReady = true; }, 1000);
       const v = document.getElementById('preview-video');
       if (v) v.srcObject = localStream;
       showState('live');
