@@ -8,13 +8,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#2563eb">
-<link rel="manifest" href="manifest.json">
+<!-- manifest: icon-192.png/icon-512.pngをGitHubに追加したら有効化 -->
 <script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('service-worker.js');
-    });
-  }
+  // service-worker: GitHubにファイルがある場合のみ有効化
 </script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;600;700;900&family=JetBrains+Mono:wght@500&display=swap');
@@ -1096,8 +1092,7 @@
           localStream = null;
           window._shareActive = false;
           showState('connected');
-          alert('「画面全体」を選択してください。
-タブやウィンドウは選択できません。');
+          alert('「画面全体」を選択してください。\nタブやウィンドウは選択できません。');
           return;
         }
       } catch(e) {
