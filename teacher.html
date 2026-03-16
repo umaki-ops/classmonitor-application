@@ -992,6 +992,22 @@ function listenStudents(){
     if(d.hasOwnProperty('tabLeaveCount')) updateLeaveCount(sid, d.tabLeaveCount);
     // タブ離脱中フラグ
     if(d.hasOwnProperty('tabAway')) updateTabAway(sid, d.tabAway);
+    // 名前・アバターが更新されたらカード表示を更新
+    if(d.name || d.photoURL) {
+      const nameEl = document.querySelector(`#card-${sid} .sname span`);
+      if(nameEl && d.name) nameEl.textContent = d.name;
+      const avEl = document.querySelector(`#card-${sid} .avatar`);
+      const avPhEl = document.querySelector(`#card-${sid} .avatar-ph`);
+      if(d.photoURL) {
+        if(avEl) { avEl.src = d.photoURL; }
+        else if(avPhEl) {
+          const img = document.createElement('img');
+          img.className = 'avatar'; img.src = d.photoURL; img.alt = '';
+          avPhEl.parentNode.replaceChild(img, avPhEl);
+        }
+      }
+      if(d.name && avPhEl) avPhEl.textContent = d.name.charAt(0);
+    }
     // status が含まれていない変化（shareType だけ等）は無視
     if(!d.hasOwnProperty('status'))return;
     if(d.status==='waiting'){

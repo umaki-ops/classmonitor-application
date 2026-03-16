@@ -621,21 +621,14 @@
       // Googleアカウント選択画面を毎回表示（複数アカウント対応）
       _provider.setCustomParameters({ prompt: 'select_account' });
       const _result = await signInWithPopup(_auth, _provider);
-      // デバッグ：取得できた情報をコンソールに出力
-      console.log('[LOGIN] user.displayName:', _result.user.displayName);
-      console.log('[LOGIN] user.email:', _result.user.email);
-      console.log('[LOGIN] providerData:', JSON.stringify(_result.user.providerData));
-      console.log('[LOGIN] additionalUserInfo:', JSON.stringify(_result.additionalUserInfo));
-
       // ログイン結果からdisplayNameを確実に取得
       const _profile = _result.additionalUserInfo?.profile;
       const _resolvedName =
         _result.user.displayName ||
+        _result.user.providerData?.[0]?.displayName ||
         _profile?.name ||
         _profile?.given_name ||
-        _result.user.providerData?.[0]?.displayName ||
         null;
-      console.log('[LOGIN] resolved displayName:', _resolvedName);
       if (_resolvedName) {
         window._googleDisplayName = _resolvedName;
         updateProfile(_result.user, { displayName: _resolvedName }).catch(() => {});
@@ -958,6 +951,11 @@
 
     // ===== WebRTC =====
     async function handleOffer(sdp) {
+      // すでにstable状態（接続済み）でofferが来た場合はPCを作り直す
+      if (pc && pc.signalingState !== 'stable' && pc.signalingState !== 'have-remote-offer') {
+        try { pc.close(); } catch(e) {}
+        pc = null;
+      }
       if (!pc) {
         pc = new RTCPeerConnection(ICE);
         pc.onicecandidate = e => {
@@ -993,6 +991,11 @@
             } catch(e) {}
           }
         }, 1000);
+      }
+      // signalingStateがstableまたはhave-remote-offerのときのみ処理
+      if (pc.signalingState !== 'stable' && pc.signalingState !== 'have-remote-offer') {
+        console.warn('[handleOffer] unexpected signalingState:', pc.signalingState, '- skipping');
+        return;
       }
       await pc.setRemoteDescription(new RTCSessionDescription(sdp));
       const answer = await pc.createAnswer();
