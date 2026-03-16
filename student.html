@@ -898,44 +898,51 @@
       // ===== タブ離脱カウント =====
       let _tabLeaveCount = 0;
       let _tabHidden = false;
-      // セッション参加完了後のみカウント開始（ログインポップアップのblurを除外）
+      let _tabLeaveStartTime = null; // 離脱開始時刻
       let _tabMonitorReady = false;
-      setTimeout(() => { _tabMonitorReady = true; }, 2000); // 2秒後に監視開始
+      setTimeout(() => { _tabMonitorReady = true; }, 2000);
 
-      // visibilitychange: タブが非表示になったらカウント＋tabAwayフラグ
-      document.addEventListener('visibilitychange', () => {
-        if (!_tabMonitorReady) return;
-        if (document.hidden) {
-          if (!_tabHidden) {
-            _tabHidden = true;
-            _tabLeaveCount++;
-            set(ref(db, `sessions/${sessionId}/students/${studentId}/tabLeaveCount`), _tabLeaveCount);
-            set(ref(db, `sessions/${sessionId}/students/${studentId}/lastLeaveAt`), Date.now());
-            set(ref(db, `sessions/${sessionId}/students/${studentId}/tabAway`), true);
-          }
-        } else {
-          _tabHidden = false;
-          set(ref(db, `sessions/${sessionId}/students/${studentId}/tabAway`), false);
-        }
-      });
+      function onTabLeave() {
+        if (!_tabMonitorReady || _tabHidden) return;
+        _tabHidden = true;
+        _tabLeaveCount++;
+        _tabLeaveStartTime = Date.now();
+        const logKey = `log_${_tabLeaveCount}`;
+        set(ref(db, `sessions/${sessionId}/students/${studentId}/tabLeaveCount`), _tabLeaveCount);
+        set(ref(db, `sessions/${sessionId}/students/${studentId}/tabAway`), true);
+        // 離脱ログ：開始時刻を記録
+        set(ref(db, `sessions/${sessionId}/students/${studentId}/leaveLogs/${logKey}`), {
+          leaveAt: _tabLeaveStartTime,
+          returnAt: null,
+          duration: null
+        });
+      }
 
-      // windowがフォーカスを失った場合もカウント（別ウィンドウ対応）
-      window.addEventListener('blur', () => {
-        if (!_tabMonitorReady) return;
-        if (!_tabHidden) {
-          _tabHidden = true;
-          _tabLeaveCount++;
-          set(ref(db, `sessions/${sessionId}/students/${studentId}/tabLeaveCount`), _tabLeaveCount);
-          set(ref(db, `sessions/${sessionId}/students/${studentId}/lastLeaveAt`), Date.now());
-          set(ref(db, `sessions/${sessionId}/students/${studentId}/tabAway`), true);
-        }
-      });
-
-      window.addEventListener('focus', () => {
-        if (!_tabMonitorReady) return;
+      function onTabReturn() {
+        if (!_tabMonitorReady || !_tabHidden) return;
         _tabHidden = false;
+        const returnAt = Date.now();
+        const duration = _tabLeaveStartTime ? Math.round((returnAt - _tabLeaveStartTime) / 1000) : null;
+        const logKey = `log_${_tabLeaveCount}`;
         set(ref(db, `sessions/${sessionId}/students/${studentId}/tabAway`), false);
+        // 離脱ログ：復帰時刻と離脱時間を更新
+        if (_tabLeaveStartTime) {
+          set(ref(db, `sessions/${sessionId}/students/${studentId}/leaveLogs/${logKey}`), {
+            leaveAt: _tabLeaveStartTime,
+            returnAt,
+            duration
+          });
+        }
+        _tabLeaveStartTime = null;
+      }
+
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) onTabLeave();
+        else onTabReturn();
       });
+
+      window.addEventListener('blur', () => { onTabLeave(); });
+      window.addEventListener('focus', () => { onTabReturn(); });
 
 
       // main()内のローカル関数をHTMLのonclickから呼べるよう window に公開
