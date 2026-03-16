@@ -645,7 +645,7 @@ window.startSession=async function(){
   sessionId=gid();
   const{ref,set}=window.FB;
   await set(ref(db,`sessions/${sessionId}`),{className:document.getElementById('class-name').value||'クラス',createdAt:Date.now(),active:true});
-  const base=location.href.replace('teacher.html','student.html');
+  const base='https://umaki-ops.github.io/classmonitor-application/student.html';
   const url=`${base}?session=${sessionId}&db=${encodeURIComponent(du)}&apiKey=${encodeURIComponent(ak)}&projectId=${encodeURIComponent(pi)}`;
   document.getElementById('setup-panel').style.display='none';
   document.getElementById('control-bar').style.display='flex';
