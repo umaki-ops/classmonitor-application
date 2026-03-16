@@ -621,17 +621,23 @@
       // Googleアカウント選択画面を毎回表示（複数アカウント対応）
       _provider.setCustomParameters({ prompt: 'select_account' });
       const _result = await signInWithPopup(_auth, _provider);
-      // ログイン結果からdisplayNameを確実に取得してwindowに保存
-      // onAuthStateChangedより先に呼ばれるため、ここで保存しておく
+      // デバッグ：取得できた情報をコンソールに出力
+      console.log('[LOGIN] user.displayName:', _result.user.displayName);
+      console.log('[LOGIN] user.email:', _result.user.email);
+      console.log('[LOGIN] providerData:', JSON.stringify(_result.user.providerData));
+      console.log('[LOGIN] additionalUserInfo:', JSON.stringify(_result.additionalUserInfo));
+
+      // ログイン結果からdisplayNameを確実に取得
       const _profile = _result.additionalUserInfo?.profile;
       const _resolvedName =
+        _result.user.displayName ||
         _profile?.name ||
         _profile?.given_name ||
-        _result.user.displayName ||
+        _result.user.providerData?.[0]?.displayName ||
         null;
+      console.log('[LOGIN] resolved displayName:', _resolvedName);
       if (_resolvedName) {
         window._googleDisplayName = _resolvedName;
-        // Firebaseユーザーにも反映（非同期だが保存はwindow変数を優先）
         updateProfile(_result.user, { displayName: _resolvedName }).catch(() => {});
       }
     } catch(e) {
