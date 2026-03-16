@@ -20,60 +20,64 @@
   .icon { font-size: 64px; margin-bottom: 20px; }
   h1 { font-size: 22px; font-weight: 700; margin-bottom: 10px; line-height: 1.4; }
   .sub { font-size: 14px; opacity: .75; margin-bottom: 28px; line-height: 1.8; }
-  .launch-btn {
+  .spinner {
+    width: 40px; height: 40px;
+    border: 3px solid rgba(255,255,255,.2);
+    border-top-color: #60a5fa;
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+    margin: 0 auto 24px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .btn {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
     width: 100%;
-    padding: 18px 24px;
-    background: linear-gradient(135deg, #2563eb, #7c3aed);
-    color: #fff;
-    border: none;
-    border-radius: 16px;
-    font-size: 18px;
+    padding: 16px 24px;
+    border-radius: 14px;
+    font-size: 16px;
     font-weight: 700;
     cursor: pointer;
     text-decoration: none;
     font-family: inherit;
-    box-shadow: 0 6px 24px rgba(37,99,235,.4);
-    transition: transform .15s, box-shadow .15s;
-    margin-bottom: 16px;
+    border: none;
+    margin-bottom: 12px;
+    transition: transform .15s, opacity .15s;
   }
-  .launch-btn:active { transform: scale(.97); }
-  .note { font-size: 12px; opacity: .6; line-height: 1.7; margin-top: 8px; }
-  .error-box {
-    display: none;
-    margin-top: 20px;
-    background: rgba(239,68,68,.15);
-    border: 1px solid rgba(239,68,68,.3);
-    border-radius: 10px;
-    padding: 14px;
-    font-size: 13px;
-    line-height: 1.7;
-    color: #fca5a5;
-  }
+  .btn:active { transform: scale(.97); opacity: .85; }
+  .btn-primary { background: linear-gradient(135deg, #2563eb, #7c3aed); color: #fff; box-shadow: 0 6px 20px rgba(37,99,235,.4); }
+  .btn-secondary { background: rgba(255,255,255,.1); color: #fff; border: 1px solid rgba(255,255,255,.2); font-size: 14px; padding: 12px 24px; }
+  .note { font-size: 12px; opacity: .55; line-height: 1.7; margin-top: 16px; }
+  #status { font-size: 13px; opacity: .7; margin-bottom: 16px; min-height: 20px; }
 </style>
 </head>
 <body>
 <div class="card">
   <div class="icon">📲</div>
-  <h1 id="title">授業モニターを開く</h1>
-  <p class="sub" id="sub">下のボタンをタップしてPWAアプリを起動してください</p>
+  <h1 id="title">授業モニターを起動しています</h1>
+  <p class="sub" id="sub">少しお待ちください…</p>
+  <div class="spinner" id="spinner"></div>
+  <p id="status"></p>
 
-  <a id="launch-btn" class="launch-btn" href="#">
-    <span>📲</span>
-    <span>アプリを起動する</span>
-  </a>
-
-  <p class="note">
-    ※「授業モニター」がホーム画面にインストールされている必要があります
-  </p>
-
-  <div class="error-box" id="error-box">
-    アプリが起動しない場合は、ホーム画面の<br>
-    <strong>「授業モニター」</strong>アイコンから直接開いてください。
+  <!-- 自動起動失敗時に表示するボタン群 -->
+  <div id="btns" style="display:none;">
+    <a id="btn-pwa" class="btn btn-primary" href="#">
+      <span>📲</span><span>PWAアプリを起動する</span>
+    </a>
+    <a id="btn-intent" class="btn btn-secondary" href="#">
+      <span>🔗</span><span>別の方法で開く</span>
+    </a>
+    <a id="btn-https" class="btn btn-secondary" href="#">
+      <span>🌐</span><span>ブラウザで開く</span>
+    </a>
   </div>
+
+  <p class="note" id="note" style="display:none;">
+    「PWAアプリを起動する」を押してもアプリが開かない場合は<br>
+    「ブラウザで開く」をお試しください
+  </p>
 </div>
 
 <script>
@@ -83,20 +87,95 @@
   if (!params.has('session')) {
     document.getElementById('title').textContent = 'URLが正しくありません';
     document.getElementById('sub').textContent = '先生から正しいURLを送ってもらってください。';
-    document.getElementById('launch-btn').style.display = 'none';
+    document.getElementById('spinner').style.display = 'none';
     return;
   }
 
-  const customUrl = 'web+classmonitor://?' + params.toString();
-  const btn = document.getElementById('launch-btn');
-  btn.href = customUrl;
+  const p = params.toString();
 
-  btn.addEventListener('click', function() {
-    setTimeout(function() {
-      if (!document.hidden) {
-        document.getElementById('error-box').style.display = 'block';
-      }
-    }, 3000);
+  // 各スキームのURL
+  const urls = {
+    // ① web+classmonitor カスタムスキーム（管理コンソール設定済みの場合）
+    custom: 'web+classmonitor://?' + p,
+
+    // ② intent:// スキーム（ChromeOS/Android Chrome経由でPWA起動を試みる）
+    intent: 'intent://umaki-ops.github.io/classmonitor-application/student.html?' + p +
+            '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' +
+            encodeURIComponent('https://umaki-ops.github.io/classmonitor-application/student.html?' + p) + ';end',
+
+    // ③ https 直リンク（フォールバック）
+    https: 'https://umaki-ops.github.io/classmonitor-application/student.html?' + p
+  };
+
+  // ボタンにURLをセット
+  document.getElementById('btn-pwa').href    = urls.custom;
+  document.getElementById('btn-intent').href = urls.intent;
+  document.getElementById('btn-https').href  = urls.https;
+
+  // 自動起動を順番に試みる
+  let step = 0;
+  const statusEl = document.getElementById('status');
+
+  function showFallback() {
+    document.getElementById('spinner').style.display = 'none';
+    document.getElementById('sub').textContent = '下のボタンから起動してください';
+    document.getElementById('btns').style.display = 'block';
+    document.getElementById('note').style.display = 'block';
+    statusEl.textContent = '';
+  }
+
+  function tryStep() {
+    // ページが非表示になったら起動成功とみなす
+    if (document.hidden) return;
+
+    if (step === 0) {
+      // ① まず web+classmonitor:// を試す（iframeで静かに）
+      statusEl.textContent = 'アプリを探しています…';
+      step = 1;
+      try {
+        const a = document.createElement('a');
+        a.href = urls.custom;
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+      } catch(e) {}
+      setTimeout(tryStep, 1200);
+
+    } else if (step === 1) {
+      if (document.hidden) return;
+      // ② intent:// を試す
+      statusEl.textContent = '別の方法を試しています…';
+      step = 2;
+      try {
+        const a = document.createElement('a');
+        a.href = urls.intent;
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+      } catch(e) {}
+      setTimeout(tryStep, 1200);
+
+    } else {
+      if (document.hidden) return;
+      // ③ 自動起動失敗 → ボタンを表示
+      document.getElementById('title').textContent = 'アプリを開いてください';
+      showFallback();
+    }
+  }
+
+  // ページ表示後に自動起動開始
+  document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(tryStep, 500);
+  });
+
+  // PWAに切り替わったことを検知（成功時）
+  document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+      document.getElementById('title').textContent = '起動しました！';
+      document.getElementById('sub').textContent = 'アプリに切り替わりました';
+      document.getElementById('spinner').style.display = 'none';
+      statusEl.textContent = '';
+    }
   });
 })();
 </script>
