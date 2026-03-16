@@ -328,7 +328,13 @@
   (function() {
     const isStandalone =
       window.matchMedia('(display-mode: standalone)').matches ||
-      window.navigator.standalone === true;
+      window.matchMedia('(display-mode: minimal-ui)').matches ||
+      window.matchMedia('(display-mode: fullscreen)').matches ||
+      window.navigator.standalone === true ||
+      // 拡張機能のpopupウィンドウ（アドレスバーなし）も許可
+      !window.locationbar.visible ||
+      // referrerがない直接アクセスはアプリ起動とみなす
+      (document.referrer === '' && window.history.length <= 1);
 
     if (!isStandalone) {
       // ブラウザで開いた場合 → ページを表示せず全画面でブロック
