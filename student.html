@@ -338,49 +338,8 @@
     // ページ読み込み時に全画面誘導オーバーレイを表示
     //（Fullscreen APIはユーザー操作が必要なため、タップを促す）
     document.addEventListener('DOMContentLoaded', function() {
-      // すでに全画面なら何もしない（PWAアイコンから開いた場合）
-      if (document.fullscreenElement ||
-          window.matchMedia('(display-mode: standalone)').matches ||
-          window.matchMedia('(display-mode: fullscreen)').matches ||
-          window.navigator.standalone === true) return;
-
-      // 全画面誘導オーバーレイを作成
-      const overlay = document.createElement('div');
-      overlay.id = 'fs-prompt-overlay';
-      overlay.style.cssText = [
-        'position:fixed','inset:0','z-index:999999',
-        'background:linear-gradient(135deg,#1e3a5f,#0f172a)',
-        'color:#fff','display:flex','flex-direction:column',
-        'align-items:center','justify-content:center',
-        'text-align:center','padding:32px','cursor:pointer',
-        'font-family:Noto Sans JP,sans-serif'
-      ].join(';');
-      overlay.innerHTML = `
-        <div style="font-size:64px;margin-bottom:24px;">📺</div>
-        <div style="font-size:22px;font-weight:700;margin-bottom:16px;line-height:1.4;">
-          授業モニター
-        </div>
-        <div style="font-size:15px;opacity:.8;margin-bottom:40px;line-height:1.8;">
-          画面をタップして開始してください
-        </div>
-        <div style="background:rgba(255,255,255,.15);border-radius:16px;padding:16px 40px;font-size:17px;font-weight:700;">
-          タップして開始
-        </div>
-      `;
-
-      // タップしたら全画面化してオーバーレイを消す
-      function startFS() {
-        requestFS();
-        // 全画面APIが成功したらオーバーレイを消す
-        setTimeout(() => {
-          if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
-        }, 300);
-      }
-
-      overlay.addEventListener('click',      startFS, { once: true });
-      overlay.addEventListener('touchstart', startFS, { once: true });
-      overlay.addEventListener('keydown',    startFS, { once: true });
-      document.documentElement.appendChild(overlay);
+      // PWAアイコンから開いた場合は起動時に全画面を要求
+      requestFS();
     });
 
     // 全画面が解除されたら再要求
