@@ -778,7 +778,7 @@ window.closeReport = async function() {
 window.downloadReportCSV = function() {
   const now = new Date();
   const dateStr = now.toLocaleDateString('ja-JP').split('/').join('-');
-  let csv = '﻿氏名,メール,離脱回数';
+  let csv = '﻿氏名,離脱回数';
   // ログの最大数を求めてヘッダー列を作る
   const maxLogs = Math.max(..._reportData.map(s => s.logs.length), 0);
   for (let i = 1; i <= maxLogs; i++) {
@@ -787,7 +787,7 @@ window.downloadReportCSV = function() {
   csv += '\n';
 
   _reportData.forEach(s => {
-    let row = `"${s.name}","${s.email}",${s.leaveCount}`;
+    let row = `"${s.name}",${s.leaveCount}`;
     for (let i = 0; i < maxLogs; i++) {
       const log = s.logs[i];
       if (log) {
