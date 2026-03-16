@@ -992,7 +992,7 @@ function listenStudents(){
     if(d.hasOwnProperty('tabLeaveCount')) updateLeaveCount(sid, d.tabLeaveCount);
     // タブ離脱中フラグ
     if(d.hasOwnProperty('tabAway')) updateTabAway(sid, d.tabAway);
-    // 名前・アバターが更新されたらカード表示を更新
+    // 名前・アバターが更新されたらカード表示を更新して並び替え
     if(d.name || d.photoURL) {
       const nameEl = document.querySelector(`#card-${sid} .sname span`);
       if(nameEl && d.name) nameEl.textContent = d.name;
@@ -1007,6 +1007,8 @@ function listenStudents(){
         }
       }
       if(d.name && avPhEl) avPhEl.textContent = d.name.charAt(0);
+      // 名前更新後に並び替え
+      sortGrid();
     }
     // status が含まれていない変化（shareType だけ等）は無視
     if(!d.hasOwnProperty('status'))return;
@@ -1383,6 +1385,21 @@ window.sendMsgToAll = () => sendMsg('all');
 window.sendMsgToStudent = (sid) => sendMsg(sid);
 
 // ===== Cards =====
+function sortGrid() {
+  const grid = document.getElementById('grid');
+  const cards = [...grid.querySelectorAll('.student-card')];
+  cards.sort((a, b) => {
+    const sidA = a.id.replace('card-', '');
+    const sidB = b.id.replace('card-', '');
+    const nameA = students[sidA]?.name || '';
+    const nameB = students[sidB]?.name || '';
+    return nameA.localeCompare(nameB, 'ja');
+  });
+  // 並び替え後の順序でDOMに再挿入
+  const emptyState = document.getElementById('empty-state');
+  cards.forEach(card => grid.insertBefore(card, emptyState));
+}
+
 function addCard(sid,data){
   document.getElementById('empty-state').style.display='none';
   const name=data.name||data.email||'不明';
@@ -1402,14 +1419,8 @@ function addCard(sid,data){
       <div class="card-actions" id="actions-${sid}"></div>
     </div>`;
   const grid = document.getElementById('grid');
-  const existingCards = [...grid.querySelectorAll('.student-card')];
-  const insertBefore = existingCards.find(c => {
-    const sid2 = c.id.replace('card-', '');
-    const name2 = students[sid2]?.name || '';
-    return name.localeCompare(name2) < 0;
-  });
-  if (insertBefore) grid.insertBefore(card, insertBefore);
-  else grid.appendChild(card);
+  grid.appendChild(card);
+  sortGrid(); // 追加後に全体を名前順に並び替え
   updateCardContent(sid);
   if(teacherSharing)setupTWPc(sid);
   updateStats();
