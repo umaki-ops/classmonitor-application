@@ -653,16 +653,16 @@ window.startSession=async function(){
   const{ref,set}=window.FB;
   await set(ref(db,`sessions/${sessionId}`),{className:document.getElementById('class-name').value||'クラス',createdAt:Date.now(),active:true});
   const _params=`session=${sessionId}&db=${encodeURIComponent(du)}&apiKey=${encodeURIComponent(ak)}&projectId=${encodeURIComponent(pi)}`;
-  const customUrl=`web+classmonitor://?${_params}`;
-  const httpsUrl=`https://umaki-ops.github.io/classmonitor-application/student.html?${_params}`;
+  // launcher.html経由のhttpsURL → 生徒がクリックするとPWAが直接起動
+  const httpsUrl=`https://umaki-ops.github.io/classmonitor-application/launcher.html?${_params}`;
   document.getElementById('setup-panel').style.display='none';
   document.getElementById('control-bar').style.display='flex';
   document.getElementById('share-box').style.display='block';
   document.getElementById('end-btn').style.display='';
   document.getElementById('hactions').style.display='flex';
-  // share-url にカスタムスキームURLを表示（生徒がクリックするとPWA起動）
+  // share-url にlauncher経由のhttpsURLを表示（Google Classroomでクリックできるリンクになる）
   const shareUrl=document.getElementById('share-url');
-  if(shareUrl){ shareUrl.textContent=customUrl; shareUrl.dataset.customUrl=customUrl; }
+  if(shareUrl){ shareUrl.textContent=httpsUrl; shareUrl.dataset.customUrl=httpsUrl; }
   const dot=document.getElementById('cdot');dot.style.background='var(--green)';dot.style.animation='pulse 2s infinite';
   document.getElementById('cstatus').textContent=sessionId;
   listenStudents();
