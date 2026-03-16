@@ -335,8 +335,9 @@
       !window.locationbar.visible ||
       // referrerがない直接アクセスはアプリ起動とみなす
       (document.referrer === '' && window.history.length <= 1) ||
-      // 教員から送られたURLにsessionパラメータがある場合は許可
-      new URLSearchParams(window.location.search).has('session');
+      // 教員から送られたURL（通常 or カスタムスキーム経由）は許可
+      new URLSearchParams(window.location.search).has('session') ||
+      new URLSearchParams(window.location.search).has('uri');
 
     if (!isStandalone) {
       // ブラウザで開いた場合 → ページを表示せず全画面でブロック
@@ -371,6 +372,71 @@
         document.documentElement.appendChild(block);
       });
     }
+  })();
+
+  // ===== 全画面強制維持 =====
+  (function() {
+    // Fullscreen API でフルスクリーンを要求する
+    function requestFS() {
+      const el = document.documentElement;
+      if (!document.fullscreenElement) {
+        const fn =
+          el.requestFullscreen       ||
+          el.webkitRequestFullscreen ||
+          el.mozRequestFullScreen    ||
+          el.msRequestFullscreen;
+        if (fn) fn.call(el).catch(() => {});
+      }
+    }
+
+    // DOMContentLoaded 後に全画面要求（ユーザー操作後でないと効かないブラウザ対策）
+    document.addEventListener('DOMContentLoaded', function() {
+      // 最初のクリック/タップで全画面化
+      document.addEventListener('click',     requestFS, { once: true });
+      document.addEventListener('touchstart', requestFS, { once: true });
+      document.addEventListener('keydown',   requestFS, { once: true });
+    });
+
+    // 全画面が解除されたら即座に再要求
+    document.addEventListener('fullscreenchange', function() {
+      if (!document.fullscreenElement) {
+        // 少し遅らせて再要求（Escape直後に即時要求するとブロックされる場合があるため）
+        setTimeout(requestFS, 300);
+      }
+    });
+    document.addEventListener('webkitfullscreenchange', function() {
+      if (!document.webkitFullscreenElement) {
+        setTimeout(requestFS, 300);
+      }
+    });
+
+    // Escape・F11 などを検知して全画面に戻す
+    document.addEventListener('keydown', function(e) {
+      // Escape
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        setTimeout(requestFS, 300);
+      }
+      // F11（一部Chromebookで有効）
+      if (e.key === 'F11') {
+        e.preventDefault();
+        setTimeout(requestFS, 100);
+      }
+    }, true); // capture phase で先に捕捉
+
+    // ウィンドウサイズ変化を監視して全画面に戻す
+    window.addEventListener('resize', function() {
+      const isFullH = window.innerHeight >= screen.height * 0.95;
+      if (!isFullH) {
+        setTimeout(requestFS, 400);
+      }
+    });
+
+    // 右クリックを無効化（コンテキストメニューから操作させない）
+    document.addEventListener('contextmenu', function(e) {
+      e.preventDefault();
+    });
   })();
 </script>
 </head>
@@ -656,7 +722,22 @@
 
 
   async function main() {
-    const params = new URLSearchParams(location.search);
+    // カスタムスキーム web+classmonitor://?key=val または通常のクエリパラメータを解析
+    let params;
+    const uriParam = new URLSearchParams(location.search).get('uri');
+    if (uriParam) {
+      // protocol_handlers 経由: student.html?uri=web%2Bclassmonitor%3A%2F%2F%3Fsession%3D...
+      try {
+        const decoded = decodeURIComponent(uriParam);
+        // web+classmonitor://?session=xxx の ? 以降を取得
+        const qIndex = decoded.indexOf('?');
+        params = new URLSearchParams(qIndex >= 0 ? decoded.slice(qIndex + 1) : decoded);
+      } catch(e) {
+        params = new URLSearchParams(location.search);
+      }
+    } else {
+      params = new URLSearchParams(location.search);
+    }
     const sessionId = params.get('session');
     const dbUrl = params.get('db');
     const apiKey = params.get('apiKey');
