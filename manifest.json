@@ -1,23 +1,31 @@
 {
-  "name": "授業モニター（生徒用）",
+  "name": "授業モニター",
   "short_name": "授業モニター",
-  "description": "先生と生徒をつなぐ授業支援ツール",
-  "start_url": "./student.html",
-  "scope": "./",
-  "display": "standalone",
-  "orientation": "portrait-primary",
+  "description": "ClassMonitor 生徒用アプリ",
+  "start_url": "/classmonitor-application/student.html",
+  "scope": "/classmonitor-application/",
+  "display": "fullscreen",
   "background_color": "#f0f4ff",
   "theme_color": "#2563eb",
+  "lang": "ja",
   "icons": [
     {
-      "src": "https://ui-avatars.com/api/?name=授業&background=2563eb&color=fff&size=192&bold=true",
+      "src": "icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "https://ui-avatars.com/api/?name=授業&background=2563eb&color=fff&size=512&bold=true",
+      "src": "icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "protocol_handlers": [
+    {
+      "protocol": "web+classmonitor",
+      "url": "/classmonitor-application/student.html?uri=%s"
     }
   ]
 }
