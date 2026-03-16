@@ -1,0 +1,44 @@
+{
+  "manifest_version": 3,
+  "name": "授業モニター ロック",
+  "version": "1.0.0",
+  "description": "授業セッション中、生徒を授業モニター以外のタブへ移動させないようにします。",
+  "permissions": [
+    "tabs",
+    "storage",
+    "alarms"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_start",
+      "all_frames": false
+    }
+  ],
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtYwCpl/N76aMLY8P+4keAyLcwFoKo3kv/2IWSWyV5zJI5wpWYC1ndB1LbpOu8h5f4U/Lc7XuG9uc8Tpe4BVd9YQHFKulWk0hL9R8GIkYrAYX1AL7ChPyBEs8m27kcKYjgm8P+MPP8KI+MB1xGCB4kpA7BVf+YBjDEgBoKsi5VPxGfulUSOKTJw1eVVmKFKg9CwHK0Dc4gg6QkXb+sSPE/JVbxYGbd9lJmsv0kIARVwQvTGlTLIV8hKHMhdS6RcrDT0e8e4W3TVg8YxKpk1BRYAt0G7GLYdaBtQ3hj2UGYkwqkZx15bgX4SbQxukeQ3R04DuJj0q8FNoguQpVbD74iwIDAQAB"
+}
