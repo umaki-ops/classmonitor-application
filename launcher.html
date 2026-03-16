@@ -16,45 +16,39 @@
     justify-content: center;
     padding: 24px;
   }
-  .card {
-    text-align: center;
-    max-width: 380px;
-    width: 100%;
-  }
+  .card { text-align: center; max-width: 400px; width: 100%; }
   .icon { font-size: 64px; margin-bottom: 20px; }
   h1 { font-size: 22px; font-weight: 700; margin-bottom: 10px; line-height: 1.4; }
-  .sub { font-size: 14px; opacity: .75; margin-bottom: 32px; line-height: 1.7; }
-  .spinner {
-    width: 40px; height: 40px;
-    border: 3px solid rgba(255,255,255,.2);
-    border-top-color: #60a5fa;
-    border-radius: 50%;
-    animation: spin .8s linear infinite;
-    margin: 0 auto 24px;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .manual-btn {
-    display: inline-block;
-    margin-top: 16px;
-    padding: 12px 28px;
-    background: #2563eb;
+  .sub { font-size: 14px; opacity: .75; margin-bottom: 28px; line-height: 1.8; }
+  .launch-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 18px 24px;
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
     color: #fff;
     border: none;
-    border-radius: 10px;
-    font-size: 15px;
+    border-radius: 16px;
+    font-size: 18px;
     font-weight: 700;
     cursor: pointer;
     text-decoration: none;
     font-family: inherit;
+    box-shadow: 0 6px 24px rgba(37,99,235,.4);
+    transition: transform .15s, box-shadow .15s;
+    margin-bottom: 16px;
   }
-  .manual-btn:hover { background: #1d4ed8; }
+  .launch-btn:active { transform: scale(.97); }
+  .note { font-size: 12px; opacity: .6; line-height: 1.7; margin-top: 8px; }
   .error-box {
     display: none;
-    margin-top: 24px;
+    margin-top: 20px;
     background: rgba(239,68,68,.15);
     border: 1px solid rgba(239,68,68,.3);
     border-radius: 10px;
-    padding: 16px;
+    padding: 14px;
     font-size: 13px;
     line-height: 1.7;
     color: #fca5a5;
@@ -64,78 +58,47 @@
 <body>
 <div class="card">
   <div class="icon">📲</div>
-  <h1>授業モニターを起動しています</h1>
-  <p class="sub">少しお待ちください…</p>
-  <div class="spinner" id="spinner"></div>
+  <h1 id="title">授業モニターを開く</h1>
+  <p class="sub" id="sub">下のボタンをタップしてPWAアプリを起動してください</p>
 
-  <!-- PWAが未インストールの場合のフォールバック -->
+  <a id="launch-btn" class="launch-btn" href="#">
+    <span>📲</span>
+    <span>アプリを起動する</span>
+  </a>
+
+  <p class="note">
+    ※「授業モニター」がホーム画面にインストールされている必要があります
+  </p>
+
   <div class="error-box" id="error-box">
-    PWAアプリが見つかりませんでした。<br>
-    ホーム画面に <strong>「授業モニター」</strong> がインストールされているか確認してください。<br><br>
-    インストール済みの場合は下のボタンをタップしてください。
+    アプリが起動しない場合は、ホーム画面の<br>
+    <strong>「授業モニター」</strong>アイコンから直接開いてください。
   </div>
-  <a id="manual-btn" class="manual-btn" style="display:none;" href="#">📲 アプリを開く</a>
 </div>
 
 <script>
-  (function() {
-    // URLパラメータをそのままカスタムスキームに渡す
-    const search = location.search; // ?session=xxx&db=xxx&...
-    const params = new URLSearchParams(search);
+(function() {
+  const params = new URLSearchParams(location.search);
 
-    // パラメータ検証
-    if (!params.has('session')) {
-      document.querySelector('h1').textContent = 'URLが正しくありません';
-      document.querySelector('.sub').textContent = '先生から正しいURLを送ってもらってください。';
-      document.getElementById('spinner').style.display = 'none';
-      return;
-    }
+  if (!params.has('session')) {
+    document.getElementById('title').textContent = 'URLが正しくありません';
+    document.getElementById('sub').textContent = '先生から正しいURLを送ってもらってください。';
+    document.getElementById('launch-btn').style.display = 'none';
+    return;
+  }
 
-    // カスタムスキームURLを組み立て
-    const customUrl = 'web+classmonitor://?' + params.toString();
+  const customUrl = 'web+classmonitor://?' + params.toString();
+  const btn = document.getElementById('launch-btn');
+  btn.href = customUrl;
 
-    // 手動ボタンにもセット
-    const btn = document.getElementById('manual-btn');
-    btn.href = customUrl;
-
-    // iframeで静かに起動を試みる（location変更より安全）
-    function tryLaunch() {
-      // まず iframe で試す（エラーを出さずに起動できる）
-      const iframe = document.createElement('iframe');
-      iframe.style.display = 'none';
-      document.body.appendChild(iframe);
-
-      let launched = false;
-
-      // visibilitychange でPWAに切り替わったか確認
-      document.addEventListener('visibilitychange', function onVis() {
-        if (document.hidden) {
-          launched = true;
-          document.removeEventListener('visibilitychange', onVis);
-        }
-      });
-
-      // location.href でカスタムスキームへ
-      try {
-        location.href = customUrl;
-      } catch(e) {}
-
-      // 2秒後にPWAが起動していなければフォールバック表示
-      setTimeout(function() {
-        if (!document.hidden && !launched) {
-          document.getElementById('spinner').style.display = 'none';
-          document.getElementById('error-box').style.display = 'block';
-          btn.style.display = 'inline-block';
-          document.querySelector('h1').textContent = 'アプリを開いてください';
-          document.querySelector('.sub').textContent =
-            'ホーム画面の「授業モニター」アイコンをタップして\n授業に参加してください。';
-        }
-      }, 2000);
-    }
-
-    // DOMContentLoaded後に即起動
-    tryLaunch();
-  })();
+  btn.addEventListener('click', function() {
+    setTimeout(function() {
+      if (!document.hidden) {
+        document.getElementById('error-box').style.display = 'block';
+      }
+    }, 3000);
+  });
+})();
 </script>
 </body>
 </html>
