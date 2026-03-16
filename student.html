@@ -8,11 +8,11 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#2563eb">
-<link rel="manifest" href="/classmonitor/manifest.json">
+<link rel="manifest" href="manifest.json">
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/classmonitor/service-worker.js');
+      navigator.serviceWorker.register('service-worker.js');
     });
   }
 </script>
@@ -334,7 +334,9 @@
       // 拡張機能のpopupウィンドウ（アドレスバーなし）も許可
       !window.locationbar.visible ||
       // referrerがない直接アクセスはアプリ起動とみなす
-      (document.referrer === '' && window.history.length <= 1);
+      (document.referrer === '' && window.history.length <= 1) ||
+      // 教員から送られたURLにsessionパラメータがある場合は許可
+      new URLSearchParams(window.location.search).has('session');
 
     if (!isStandalone) {
       // ブラウザで開いた場合 → ページを表示せず全画面でブロック
