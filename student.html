@@ -334,11 +334,56 @@
         if (fn) fn.call(el).catch(() => {});
       }
     }
+
+    // ページ読み込み時に全画面誘導オーバーレイを表示
+    //（Fullscreen APIはユーザー操作が必要なため、タップを促す）
     document.addEventListener('DOMContentLoaded', function() {
-      document.addEventListener('click',     requestFS, { once: true });
-      document.addEventListener('touchstart', requestFS, { once: true });
-      document.addEventListener('keydown',   requestFS, { once: true });
+      // すでに全画面なら何もしない（PWAアイコンから開いた場合）
+      if (document.fullscreenElement ||
+          window.matchMedia('(display-mode: standalone)').matches ||
+          window.matchMedia('(display-mode: fullscreen)').matches ||
+          window.navigator.standalone === true) return;
+
+      // 全画面誘導オーバーレイを作成
+      const overlay = document.createElement('div');
+      overlay.id = 'fs-prompt-overlay';
+      overlay.style.cssText = [
+        'position:fixed','inset:0','z-index:999999',
+        'background:linear-gradient(135deg,#1e3a5f,#0f172a)',
+        'color:#fff','display:flex','flex-direction:column',
+        'align-items:center','justify-content:center',
+        'text-align:center','padding:32px','cursor:pointer',
+        'font-family:Noto Sans JP,sans-serif'
+      ].join(';');
+      overlay.innerHTML = `
+        <div style="font-size:64px;margin-bottom:24px;">📺</div>
+        <div style="font-size:22px;font-weight:700;margin-bottom:16px;line-height:1.4;">
+          授業モニター
+        </div>
+        <div style="font-size:15px;opacity:.8;margin-bottom:40px;line-height:1.8;">
+          画面をタップして開始してください
+        </div>
+        <div style="background:rgba(255,255,255,.15);border-radius:16px;padding:16px 40px;font-size:17px;font-weight:700;">
+          タップして開始
+        </div>
+      `;
+
+      // タップしたら全画面化してオーバーレイを消す
+      function startFS() {
+        requestFS();
+        // 全画面APIが成功したらオーバーレイを消す
+        setTimeout(() => {
+          if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+        }, 300);
+      }
+
+      overlay.addEventListener('click',      startFS, { once: true });
+      overlay.addEventListener('touchstart', startFS, { once: true });
+      overlay.addEventListener('keydown',    startFS, { once: true });
+      document.documentElement.appendChild(overlay);
     });
+
+    // 全画面が解除されたら再要求
     document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement) setTimeout(requestFS, 300); });
     document.addEventListener('webkitfullscreenchange', () => { if (!document.webkitFullscreenElement) setTimeout(requestFS, 300); });
     document.addEventListener('keydown', e => {
@@ -590,7 +635,7 @@
 
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
   import { getDatabase, ref, set, update, onValue, onChildAdded, get} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
-  import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+  import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, updateProfile } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
   // ===== 状態管理 =====
   function showState(name) {
@@ -614,7 +659,20 @@
         location.reload();
         return;
       }
-      await signInWithPopup(_auth, new GoogleAuthProvider());
+      const _provider = new GoogleAuthProvider();
+      // 氏名・プロフィール画像を確実に取得するためscopeを追加
+      _provider.addScope('profile');
+      _provider.addScope('email');
+      // Googleアカウント選択画面を毎回表示（複数アカウント対応）
+      _provider.setCustomParameters({ prompt: 'select_account' });
+      const _result = await signInWithPopup(_auth, _provider);
+      // ログイン結果から displayName を直接取得してFirebaseユーザーを更新
+      const _credential = _result.user;
+      if (!_credential.displayName && _result.additionalUserInfo?.profile?.name) {
+        await updateProfile(_credential, {
+          displayName: _result.additionalUserInfo.profile.name
+        });
+      }
     } catch(e) {
       if (btn) {
         btn.disabled = false;
@@ -723,7 +781,9 @@
         if (!snap.exists() || !snap.val()) { clearTimeout(timeout); showState('error'); document.getElementById('error-msg').textContent = 'セッションが終了しました。';; return; }
         clearTimeout(timeout);
         sessionConfirmed = true;
-        const displayName = user.displayName || (user.email ? user.email.split('@')[0] : '') || user.email || '不明';
+        // Google認証の場合、providerDataから直接displayNameを取得（より確実）
+      const googleProvider = user.providerData.find(p => p.providerId === 'google.com');
+      const displayName = googleProvider?.displayName || user.displayName || (user.email ? user.email.split('@')[0] : '') || user.email || '不明';
         set(ref(db, `sessions/${sessionId}/students/${studentId}`), {
           name: displayName,
           email: user.email,
@@ -1058,16 +1118,29 @@
       try {
         localStream = await navigator.mediaDevices.getDisplayMedia({
           video: {
+            displaySurface: 'monitor', // 画面全体のみ選択可能にする
             width:  { ideal: 2560, max: 3840 },
             height: { ideal: 1440, max: 2160 },
             frameRate: { ideal: 30, max: 60 },
           },
           audio: false,
-          // Chromebook PWA: 画面全体を継続的に配信するため制限を外す
           selfBrowserSurface: 'include',
           preferCurrentTab: false,
           surfaceSwitching: 'include'
         });
+
+        // 画面全体以外が選ばれた場合はキャンセルして警告
+        const track = localStream.getVideoTracks()[0];
+        const surface = track.getSettings().displaySurface;
+        if (surface && surface !== 'monitor') {
+          localStream.getTracks().forEach(t => t.stop());
+          localStream = null;
+          window._shareActive = false;
+          showState('connected');
+          alert('「画面全体」を選択してください。
+タブやウィンドウは選択できません。');
+          return;
+        }
       } catch(e) {
         window._shareActive = false;
         showState('connected');
