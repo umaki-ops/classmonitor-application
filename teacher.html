@@ -1189,9 +1189,7 @@ let reconnectTimers={};
 
 async function setupPC(sid){
   if(peerConnections[sid]){try{peerConnections[sid].close();}catch(e){}}
-  // 古いシグナルをクリア（再接続時の誤作動防止）
-  const{ref,remove}=window.FB;
-  try{await remove(ref(db,`sessions/${sessionId}/signals`));}catch(e){}
+  const{ref,remove,query,orderByChild,equalTo,get}=window.FB;
   const pc=new RTCPeerConnection(ICE);peerConnections[sid]=pc;
 
   pc.ontrack=ev=>{

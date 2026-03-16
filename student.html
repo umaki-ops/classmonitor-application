@@ -1150,33 +1150,67 @@
       // トラックが終了したら共有停止
       videoTrack.onended = () => window.stopShare();
 
-      // トラック復帰処理（mute→unmute または visibilitychange/focus で呼ばれる）
-      function resumeTrack() {
-        if (!pc || !localStream) return;
-        const track = localStream.getVideoTracks()[0];
-        if (!track) return;
-        const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
-        if (sender) {
-          // 同じトラックでもreplaceTrackで強制的に再送信させる
-          sender.replaceTrack(track).catch(() => {});
-        } else {
-          // senderがない場合はトラックを追加
-          pc.addTrack(track, localStream);
+      // 復帰時に画面共有を完全に再取得して再接続する
+      async function restartShare() {
+        if (!window._shareActive) return;
+        console.log('[share] restarting after return...');
+
+        // 古いストリームを停止
+        if (localStream) {
+          localStream.getTracks().forEach(t => t.stop());
+          localStream = null;
         }
+        // PCを閉じてリセット
+        if (pc) { try { pc.close(); } catch(e) {} pc = null; }
+
+        // 新しい画面共有を取得
+        try {
+          localStream = await navigator.mediaDevices.getDisplayMedia({
+            video: {
+              displaySurface: 'monitor',
+              width:  { ideal: 2560, max: 3840 },
+              height: { ideal: 1440, max: 2160 },
+              frameRate: { ideal: 30, max: 60 },
+            },
+            audio: false,
+            selfBrowserSurface: 'include',
+            preferCurrentTab: false,
+            surfaceSwitching: 'include'
+          });
+        } catch(e) {
+          console.warn('[share] restart failed:', e);
+          window.stopShare();
+          return;
+        }
+
+        // プレビュー更新
+        const v = document.getElementById('preview-video');
+        if (v) v.srcObject = localStream;
+
+        // 新しいトラックにイベントを再登録
+        const newTrack = localStream.getVideoTracks()[0];
+        newTrack.onended = () => window.stopShare();
+
+        // statusをsharingに戻してteacher側に再接続を促す
+        set(ref(db, `sessions/${sessionId}/students/${studentId}/status`), 'waiting');
+        setTimeout(() => {
+          set(ref(db, `sessions/${sessionId}/students/${studentId}/status`), 'sharing');
+        }, 300);
+
+        console.log('[share] restarted successfully');
       }
 
       videoTrack.addEventListener('mute', () => {
         console.log('[track] muted');
       });
       videoTrack.addEventListener('unmute', () => {
-        console.log('[track] unmuted – resuming');
-        setTimeout(resumeTrack, 200);
+        console.log('[track] unmuted');
       });
 
-      // visibilitychange・focusでも復帰処理（Chromebookでunmuteが発火しない場合の対策）
+      // PWAに戻ったときに画面共有を完全に再起動
       const _resumeOnVisible = () => {
         if (!document.hidden && window._shareActive) {
-          setTimeout(resumeTrack, 300);
+          setTimeout(restartShare, 500);
         }
       };
       document.addEventListener('visibilitychange', _resumeOnVisible);
