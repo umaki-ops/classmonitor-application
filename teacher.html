@@ -777,7 +777,7 @@ window.closeReport = async function() {
 
 window.downloadReportCSV = function() {
   const now = new Date();
-  const dateStr = now.toLocaleDateString('ja-JP').replace(/\//g, '-');
+  const dateStr = now.toLocaleDateString('ja-JP').split('/').join('-');
   let csv = '﻿氏名,メール,離脱回数';
   // ログの最大数を求めてヘッダー列を作る
   const maxLogs = Math.max(..._reportData.map(s => s.logs.length), 0);
