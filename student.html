@@ -630,7 +630,6 @@
         _profile?.given_name ||
         null;
       if (_resolvedName) {
-        window._googleDisplayName = _resolvedName;
         updateProfile(_result.user, { displayName: _resolvedName }).catch(() => {});
       }
     } catch(e) {
@@ -724,10 +723,9 @@
       studentId = user.uid;
       document.getElementById('session-badge').style.display = 'none';
       document.getElementById('user-badge').style.display = 'flex';
-      // 画面表示名もwindow._googleDisplayNameを優先
-      const _dispName = window._googleDisplayName ||
-        user.providerData.find(p => p.providerId === 'google.com')?.displayName ||
-        user.displayName || user.email.split('@')[0] || '名前不明';
+      // 画面表示名（resolvedNameはこの時点ではまだ未定義のため再取得）
+      const _gp = user.providerData.find(p => p.providerId === 'google.com');
+      const _dispName = _gp?.displayName || user.displayName || user.email.split('@')[0] || '名前不明';
       document.getElementById('user-name-display').textContent = _dispName;
       document.getElementById('user-email-display').textContent = user.email;
       document.getElementById('user-avatar').src = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName||user.email)}&background=3b82f6&color=fff`;
@@ -741,25 +739,20 @@
         }
       }, 10000);
 
-      onValue(ref(db, `sessions/${sessionId}/active`), snap => {
-        if (!snap.exists() || !snap.val()) { clearTimeout(timeout); showState('error'); document.getElementById('error-msg').textContent = 'セッションが終了しました。';; return; }
-        clearTimeout(timeout);
-        sessionConfirmed = true;
-        // displayNameの優先順位:
-      // 1. signInWithPopupで直接取得した名前（最も確実）
-      // 2. providerDataのGoogle認証データ
-      // 3. user.displayName
-      // 4. メールのローカル部
+      // displayNameをここで確定（onValueコールバック外で取得して変数に保存）
       const googleProvider = user.providerData.find(p => p.providerId === 'google.com');
-      const displayName =
-        window._googleDisplayName ||
+      const resolvedName =
         googleProvider?.displayName ||
         user.displayName ||
         (user.email ? user.email.split('@')[0] : '') ||
         user.email || '不明';
-      window._googleDisplayName = null; // 使い終わったらクリア
+
+      onValue(ref(db, `sessions/${sessionId}/active`), snap => {
+        if (!snap.exists() || !snap.val()) { clearTimeout(timeout); showState('error'); document.getElementById('error-msg').textContent = 'セッションが終了しました。'; return; }
+        clearTimeout(timeout);
+        sessionConfirmed = true;
         set(ref(db, `sessions/${sessionId}/students/${studentId}`), {
-          name: displayName,
+          name: resolvedName,
           email: user.email,
           photoURL: user.photoURL || '',
           joinedAt: Date.now(),
