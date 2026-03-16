@@ -1206,7 +1206,14 @@ async function setupPC(sid){
         if(badge){badge.textContent='離脱中';badge.className='badge badge-waiting';}
       });
       ev.track.addEventListener('unmute',()=>{
-        v.play().catch(()=>{});setBadge(sid,'live');updateStats();
+        // srcObjectを再セットして確実に再生再開
+        if(v.srcObject){
+          const ms=v.srcObject;
+          v.srcObject=null;
+          v.srcObject=ms;
+        }
+        v.play().catch(()=>{});
+        setBadge(sid,'live');updateStats();
       });
     }
   };

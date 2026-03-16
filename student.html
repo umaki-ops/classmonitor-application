@@ -1150,21 +1150,37 @@
       // トラックが終了したら共有停止
       videoTrack.onended = () => window.stopShare();
 
-      // トラックが muted になったとき（他画面に切り替えで一時停止）→ unmute を監視して復旧
+      // トラック復帰処理（mute→unmute または visibilitychange/focus で呼ばれる）
+      function resumeTrack() {
+        if (!pc || !localStream) return;
+        const track = localStream.getVideoTracks()[0];
+        if (!track) return;
+        const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
+        if (sender) {
+          // 同じトラックでもreplaceTrackで強制的に再送信させる
+          sender.replaceTrack(track).catch(() => {});
+        } else {
+          // senderがない場合はトラックを追加
+          pc.addTrack(track, localStream);
+        }
+      }
+
       videoTrack.addEventListener('mute', () => {
-        // muted になっても接続は維持。unmute で自動復旧するため何もしない
-        console.log('[track] muted – waiting for unmute');
+        console.log('[track] muted');
       });
       videoTrack.addEventListener('unmute', () => {
-        console.log('[track] unmuted – stream resumed');
-        // pc の sender に最新トラックを再セット
-        if (pc) {
-          const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
-          if (sender && sender.track !== videoTrack) {
-            sender.replaceTrack(videoTrack).catch(() => {});
-          }
-        }
+        console.log('[track] unmuted – resuming');
+        setTimeout(resumeTrack, 200);
       });
+
+      // visibilitychange・focusでも復帰処理（Chromebookでunmuteが発火しない場合の対策）
+      const _resumeOnVisible = () => {
+        if (!document.hidden && window._shareActive) {
+          setTimeout(resumeTrack, 300);
+        }
+      };
+      document.addEventListener('visibilitychange', _resumeOnVisible);
+      window.addEventListener('focus', _resumeOnVisible);
       set(ref(db, `sessions/${sessionId}/students/${studentId}/status`), 'sharing');
     };
     window.stopShare = function() {
