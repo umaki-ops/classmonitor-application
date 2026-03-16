@@ -1036,6 +1036,18 @@ async function setupPC(sid){
       else{const ms=new MediaStream();ms.addTrack(ev.track);v.srcObject=ms;}
       v.play().catch(()=>{});
       v.style.display='block';if(ph)ph.style.display='none';setBadge(sid,'live');updateStats();
+
+      // トラックがmute(他画面切替時)されても最後のフレームを表示し続ける
+      ev.track.addEventListener('mute', () => {
+        // video要素はmuteされても最後のフレームを保持するため何もしない
+        // ただしbadgeを「離脱中」に更新
+        const badge = document.getElementById('badge-'+sid);
+        if(badge){ badge.textContent='離脱中'; badge.className='badge badge-waiting'; }
+      });
+      ev.track.addEventListener('unmute', () => {
+        v.play().catch(()=>{});
+        setBadge(sid,'live'); updateStats();
+      });
     }
   };
   pc.onicecandidate=ev=>{if(ev.candidate)sig(sid,{type:'ice',from:'teacher',to:sid,candidate:ev.candidate.toJSON()});};
@@ -1183,17 +1195,16 @@ window.broadcastStudentScreen=function(sid){
   const srcPc=peerConnections[sid];
   // PCがない、またはliveなトラックがない場合: video要素のsrcObjectから試みる
   let stream=null;
-  if(srcPc){
-    const tracks=srcPc.getReceivers().map(r=>r.track).filter(t=>t&&t.readyState==='live');
+  // video要素のsrcObjectを優先（muteされたトラックも含め最新状態を取得）
+  const v=document.getElementById('v-'+sid);
+  if(v&&v.srcObject){
+    const tracks=[...v.srcObject.getTracks()].filter(t=>t.readyState==='live'||t.muted);
     if(tracks.length>0) stream=new MediaStream(tracks);
   }
-  // フォールバック: video要素のsrcObjectを使う
-  if(!stream){
-    const v=document.getElementById('v-'+sid);
-    if(v&&v.srcObject){
-      const tracks=[...v.srcObject.getTracks()].filter(t=>t.readyState==='live');
-      if(tracks.length>0) stream=new MediaStream(tracks);
-    }
+  // フォールバック: RTCReceiverのトラックを使う
+  if(!stream&&srcPc){
+    const tracks=srcPc.getReceivers().map(r=>r.track).filter(t=>t&&(t.readyState==='live'||t.muted));
+    if(tracks.length>0) stream=new MediaStream(tracks);
   }
   if(!stream){
     console.warn('[broadcastStudentScreen] no stream for',sid, 'pc:',srcPc?.connectionState);
@@ -1216,7 +1227,14 @@ async function setupStudentBcastPc(sid,stream){
   try{
     if(studentBcastPcs[sid]){try{studentBcastPcs[sid].close();}catch(e){}}
     const pc=new RTCPeerConnection(ICE);studentBcastPcs[sid]=pc;
-    stream.getTracks().forEach(t=>pc.addTrack(t,stream));
+    stream.getTracks().forEach(t=>{
+      pc.addTrack(t,stream);
+      // 元トラックがmute→unmuteしたら自動で最新トラックに差し替え
+      t.addEventListener('unmute',()=>{
+        const sender=pc.getSenders().find(s=>s.track&&s.track.kind===t.kind);
+        if(sender) sender.replaceTrack(t).catch(()=>{});
+      });
+    });
     pc.onicecandidate=ev=>{if(ev.candidate)sig(sid,{type:'watch-ice',from:'teacher',to:sid,candidate:ev.candidate.toJSON()});};
     pc.onconnectionstatechange=()=>{
       console.log('[Watch->'+sid+']',pc.connectionState);

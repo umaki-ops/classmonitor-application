@@ -378,11 +378,7 @@
     function requestFS() {
       const el = document.documentElement;
       if (!document.fullscreenElement) {
-        const fn =
-          el.requestFullscreen       ||
-          el.webkitRequestFullscreen ||
-          el.mozRequestFullScreen    ||
-          el.msRequestFullscreen;
+        const fn = el.requestFullscreen||el.webkitRequestFullscreen||el.mozRequestFullScreen||el.msRequestFullscreen;
         if (fn) fn.call(el).catch(() => {});
       }
     }
@@ -391,20 +387,14 @@
       document.addEventListener('touchstart', requestFS, { once: true });
       document.addEventListener('keydown',   requestFS, { once: true });
     });
-    document.addEventListener('fullscreenchange', function() {
-      if (!document.fullscreenElement) { setTimeout(requestFS, 300); }
-    });
-    document.addEventListener('webkitfullscreenchange', function() {
-      if (!document.webkitFullscreenElement) { setTimeout(requestFS, 300); }
-    });
-    document.addEventListener('keydown', function(e) {
+    document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement) setTimeout(requestFS, 300); });
+    document.addEventListener('webkitfullscreenchange', () => { if (!document.webkitFullscreenElement) setTimeout(requestFS, 300); });
+    document.addEventListener('keydown', e => {
       if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); setTimeout(requestFS, 300); }
       if (e.key === 'F11')    { e.preventDefault(); setTimeout(requestFS, 100); }
     }, true);
-    window.addEventListener('resize', function() {
-      if (window.innerHeight < screen.height * 0.95) { setTimeout(requestFS, 400); }
-    });
-    document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+    window.addEventListener('resize', () => { if (window.innerHeight < screen.height * 0.95) setTimeout(requestFS, 400); });
+    document.addEventListener('contextmenu', e => e.preventDefault());
   })();
 
 </script>
@@ -775,17 +765,14 @@
         if (!snap.exists() || !snap.val()) { clearTimeout(timeout); showState('error'); document.getElementById('error-msg').textContent = 'セッションが終了しました。';; return; }
         clearTimeout(timeout);
         sessionConfirmed = true;
-        // Googleアカウントの表示名を優先、なければメールのローカル部、それもなければメールアドレス全体
-        const displayName = user.displayName ||
-                            (user.email ? user.email.split('@')[0] : '') ||
-                            user.email || '不明';
+        const displayName = user.displayName || (user.email ? user.email.split('@')[0] : '') || user.email || '不明';
         set(ref(db, `sessions/${sessionId}/students/${studentId}`), {
           name: displayName,
           email: user.email,
           photoURL: user.photoURL || '',
           joinedAt: Date.now(),
           status: 'waiting',
-          tabLeaveCount: 0  // アプリを開くたびに0にリセット
+          tabLeaveCount: 0
         });
         showState('connected');
       }, {onlyOnce:true});
@@ -1113,27 +1100,16 @@
       try {
         localStream = await navigator.mediaDevices.getDisplayMedia({
           video: {
-            displaySurface: 'monitor',
             width:  { ideal: 2560, max: 3840 },
             height: { ideal: 1440, max: 2160 },
-            frameRate: { ideal: 60, max: 60 },
-            latencyHint: 0
+            frameRate: { ideal: 30, max: 60 },
           },
           audio: false,
-          selfBrowserSurface: 'exclude',
+          // Chromebook PWA: 画面全体を継続的に配信するため制限を外す
+          selfBrowserSurface: 'include',
           preferCurrentTab: false,
-          surfaceSwitching: 'exclude'
+          surfaceSwitching: 'include'
         });
-        // 画面全体以外は拒否
-        const track = localStream.getVideoTracks()[0];
-        const settings = track.getSettings();
-        if (settings.displaySurface && settings.displaySurface !== 'monitor') {
-          localStream.getTracks().forEach(t => t.stop());
-          window._shareActive = false;
-          showState('connected');
-          alert('「画面全体」を選択してください。ウィンドウやタブの共有は使用できません。');
-          return;
-        }
       } catch(e) {
         window._shareActive = false;
         showState('connected');
@@ -1142,7 +1118,27 @@
       const v = document.getElementById('preview-video');
       if (v) v.srcObject = localStream;
       showState('live');
-      localStream.getVideoTracks()[0].onended = () => window.stopShare();
+
+      const videoTrack = localStream.getVideoTracks()[0];
+
+      // トラックが終了したら共有停止
+      videoTrack.onended = () => window.stopShare();
+
+      // トラックが muted になったとき（他画面に切り替えで一時停止）→ unmute を監視して復旧
+      videoTrack.addEventListener('mute', () => {
+        // muted になっても接続は維持。unmute で自動復旧するため何もしない
+        console.log('[track] muted – waiting for unmute');
+      });
+      videoTrack.addEventListener('unmute', () => {
+        console.log('[track] unmuted – stream resumed');
+        // pc の sender に最新トラックを再セット
+        if (pc) {
+          const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
+          if (sender && sender.track !== videoTrack) {
+            sender.replaceTrack(videoTrack).catch(() => {});
+          }
+        }
+      });
       set(ref(db, `sessions/${sessionId}/students/${studentId}/status`), 'sharing');
     };
     window.stopShare = function() {
