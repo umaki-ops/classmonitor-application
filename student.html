@@ -324,54 +324,6 @@
   .txt-move-handle { display: none !important; }
 </style>
 <script>
-  // PWAアプリとして起動していない場合は強制的にブロック
-  (function() {
-    const isStandalone =
-      window.matchMedia('(display-mode: standalone)').matches ||
-      window.matchMedia('(display-mode: minimal-ui)').matches ||
-      window.matchMedia('(display-mode: fullscreen)').matches ||
-      window.navigator.standalone === true ||
-      // 拡張機能のpopupウィンドウ（アドレスバーなし）も許可
-      !window.locationbar.visible ||
-      // referrerがない直接アクセスはアプリ起動とみなす
-      (document.referrer === '' && window.history.length <= 1) ||
-      new URLSearchParams(window.location.search).has('session') ||
-      new URLSearchParams(window.location.search).has('uri');
-
-    if (!isStandalone) {
-      // ブラウザで開いた場合 → ページを表示せず全画面でブロック
-      document.addEventListener('DOMContentLoaded', function() {
-        // bodyを非表示にして操作させない
-        document.body.style.display = 'none';
-
-        // 全画面ブロック画面を作成
-        const block = document.createElement('div');
-        block.style.cssText = [
-          'position:fixed','inset:0','z-index:999999',
-          'background:linear-gradient(135deg,#1e3a5f,#0f172a)',
-          'color:#fff','display:flex','flex-direction:column',
-          'align-items:center','justify-content:center',
-          'text-align:center','padding:32px',
-          'font-family:Noto Sans JP,sans-serif'
-        ].join(';');
-        block.innerHTML = `
-          <div style="font-size:64px;margin-bottom:24px;">📲</div>
-          <div style="font-size:22px;font-weight:700;margin-bottom:12px;line-height:1.4;">
-            アプリから開いてください
-          </div>
-          <div style="font-size:15px;opacity:.8;line-height:1.8;margin-bottom:32px;">
-            ホーム画面の<br>
-            <strong style="color:#60a5fa;">「授業モニター」</strong>アイコンを<br>
-            タップして開いてください
-          </div>
-          <div style="background:rgba(255,255,255,.08);border-radius:14px;padding:16px 24px;font-size:13px;opacity:.7;line-height:1.8;">
-            ブラウザからは使用できません
-          </div>
-        `;
-        document.documentElement.appendChild(block);
-      });
-    }
-  })();
 
   // ===== 全画面強制維持 =====
   (function() {
@@ -395,6 +347,12 @@
     }, true);
     window.addEventListener('resize', () => { if (window.innerHeight < screen.height * 0.95) setTimeout(requestFS, 400); });
     document.addEventListener('contextmenu', e => e.preventDefault());
+
+    // 最小化から復帰したとき全画面に戻す
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) setTimeout(requestFS, 300);
+    });
+    window.addEventListener('focus', () => { setTimeout(requestFS, 300); });
   })();
 
 </script>

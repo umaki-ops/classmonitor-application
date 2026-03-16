@@ -303,10 +303,10 @@
 
   <!-- Share URL -->
   <div id="share-box">
-    <div class="share-title">📎 生徒用リンク</div>
+    <div class="share-title">📎 生徒用URL</div>
     <div style="margin-bottom:6px;font-size:11px;color:var(--muted);line-height:1.6;">
       下のURLをコピーしてGoogle Classroom等で生徒に送ってください。<br>
-      <span style="color:var(--green);font-weight:600;">生徒がクリックするとPWAアプリが直接起動します。</span>
+      <span style="color:var(--green);font-weight:600;">生徒がリンクをクリックするとそのまま授業に参加できます。</span>
     </div>
     <div class="url-row">
       <div class="url-display" id="share-url">セッション開始後に表示されます</div>
@@ -653,8 +653,7 @@ window.startSession=async function(){
   const{ref,set}=window.FB;
   await set(ref(db,`sessions/${sessionId}`),{className:document.getElementById('class-name').value||'クラス',createdAt:Date.now(),active:true});
   const _params=`session=${sessionId}&db=${encodeURIComponent(du)}&apiKey=${encodeURIComponent(ak)}&projectId=${encodeURIComponent(pi)}`;
-  // launcher.html経由のhttpsURL → 生徒がクリックするとPWAが直接起動
-  const httpsUrl=`https://umaki-ops.github.io/classmonitor-application/launcher.html?${_params}`;
+  const httpsUrl=`https://umaki-ops.github.io/classmonitor-application/student.html?${_params}`;
   document.getElementById('setup-panel').style.display='none';
   document.getElementById('control-bar').style.display='flex';
   document.getElementById('share-box').style.display='block';
